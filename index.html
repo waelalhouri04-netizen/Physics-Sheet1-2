@@ -3,1253 +3,1388 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>فيزياء ١ | Physics 1 — UST</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<title>Physics 1 — Interactive 3D Study Guide</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0c14;
-  --surface: #111520;
-  --card: #161b2e;
-  --border: #1e2a45;
-  --accent: #3b82f6;
-  --accent2: #06b6d4;
-  --accent3: #f59e0b;
-  --green: #10b981;
-  --red: #ef4444;
-  --text: #e2e8f0;
-  --muted: #64748b;
-  --dim: #94a3b8;
-  --glow: rgba(59,130,246,0.15);
+:root{
+  --bg:#080b14;--surf:#0e1220;--card:#131928;--brd:#1a2540;
+  --a1:#4f8ef7;--a2:#00d4ff;--a3:#f59e0b;--a4:#10b981;--red:#ef4444;
+  --tx:#e2e8f0;--dim:#94a3b8;--mut:#4a5568;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;min-height:100vh;overflow-x:hidden;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:'Cairo',sans-serif;overflow-x:hidden;}
 
-/* ── STARS BG ── */
-body::before{content:'';position:fixed;inset:0;background:
-  radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 60%),
-  radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.05) 0%, transparent 60%);pointer-events:none;z-index:0;}
+/* HEADER */
+header{text-align:center;padding:clamp(28px,5vw,56px) 16px clamp(16px,3vw,32px);position:relative;}
+header::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--a1),transparent);}
+.badge{display:inline-block;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--a2);font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.8vw,11px);padding:3px 14px;border-radius:20px;letter-spacing:2px;margin-bottom:14px;}
+h1{font-size:clamp(1.5rem,4.5vw,3rem);font-weight:900;background:linear-gradient(120deg,#e2e8f0,#4f8ef7,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+.sub{color:var(--dim);font-size:clamp(.75rem,2vw,.9rem);margin-top:8px;font-family:'JetBrains Mono',monospace;}
 
-/* ── HERO ── */
-.hero{text-align:center;padding:60px 20px 40px;position:relative;}
-.hero-badge{display:inline-block;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 14px;border-radius:20px;letter-spacing:2px;margin-bottom:20px;}
-.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;line-height:1.2;background:linear-gradient(135deg,#e2e8f0 0%,#3b82f6 50%,#06b6d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hero .sub{color:var(--dim);font-size:1rem;margin-top:10px;font-family:'JetBrains Mono',monospace;}
-.hero .en{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent2);opacity:0.7;direction:ltr;}
+/* NAV TABS */
+nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:14px 12px;position:sticky;top:0;z-index:200;background:rgba(8,11,20,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd);}
+.nav-btn{padding:7px clamp(10px,2.5vw,18px);border-radius:8px;border:1px solid var(--brd);background:var(--surf);color:var(--mut);cursor:pointer;font-family:'Cairo',sans-serif;font-size:clamp(11px,1.8vw,13px);transition:.25s;white-space:nowrap;}
+.nav-btn:hover{border-color:var(--a1);color:var(--a1);}
+.nav-btn.on{background:linear-gradient(135deg,rgba(79,142,247,.18),rgba(0,212,255,.12));border-color:var(--a1);color:var(--tx);}
 
-/* ── TABS ── */
-.tabs{display:flex;justify-content:center;gap:8px;padding:20px;flex-wrap:wrap;position:sticky;top:0;z-index:100;background:rgba(10,12,20,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
-.tab{padding:10px 24px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif;font-size:14px;transition:all .3s;position:relative;}
-.tab:hover{border-color:var(--accent);color:var(--accent);}
-.tab.active{background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(6,182,212,0.2));border-color:var(--accent);color:var(--text);}
-.tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+/* SECTIONS */
+.pg{display:none;max-width:1100px;margin:0 auto;padding:clamp(20px,4vw,44px) clamp(12px,3vw,20px) 80px;}
+.pg.on{display:block;animation:up .4s ease;}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── SECTIONS ── */
-.section{display:none;max-width:1100px;margin:0 auto;padding:40px 20px 80px;}
-.section.active{display:block;animation:fadeUp .5s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+/* SECTION TITLE */
+.sec-title{text-align:center;margin-bottom:clamp(20px,4vw,36px);}
+.sec-title h2{font-size:clamp(1.2rem,3.5vw,1.8rem);font-weight:900;}
+.sec-title p{color:var(--a2);font-family:'JetBrains Mono',monospace;font-size:clamp(.7rem,1.8vw,.82rem);margin-top:4px;direction:ltr;}
+.line{width:70px;height:3px;background:linear-gradient(90deg,var(--a1),var(--a2));margin:10px auto;}
 
-/* ── CHAPTER TITLE ── */
-.ch-title{text-align:center;margin-bottom:40px;}
-.ch-title h2{font-size:2rem;font-weight:900;color:var(--text);}
-.ch-title .en-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent2);direction:ltr;margin-top:4px;}
-.divider{width:80px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));margin:12px auto;}
+/* 3D CANVAS CONTAINER */
+.scene-box{background:var(--surf);border:1px solid var(--brd);border-radius:16px;overflow:hidden;position:relative;margin-bottom:24px;}
+.scene-box canvas{display:block;width:100%!important;height:auto!important;}
+.scene-label{position:absolute;top:10px;right:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--a2);background:rgba(8,11,20,.7);padding:3px 10px;border-radius:10px;}
+.scene-controls{display:flex;gap:8px;justify-content:center;padding:10px;flex-wrap:wrap;}
+.sc-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--brd);background:var(--surf);color:var(--dim);cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;transition:.2s;}
+.sc-btn:hover,.sc-btn.on{border-color:var(--a1);color:var(--a1);}
 
-/* ── CONCEPT CARD ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;position:relative;overflow:hidden;}
-.card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--accent),var(--accent2));}
-.card h3{font-size:1.2rem;font-weight:700;color:var(--accent2);margin-bottom:6px;}
-.card .en-h{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:14px;direction:ltr;}
-.card p{color:var(--dim);line-height:1.9;font-size:0.95rem;}
-.card ul{color:var(--dim);padding-right:20px;line-height:2;}
-.card ul li{margin-bottom:4px;}
+/* CONCEPT CARD */
+.card{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:clamp(14px,3vw,24px);margin-bottom:18px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:linear-gradient(180deg,var(--a1),var(--a2));}
+.card h3{font-size:clamp(.95rem,2.2vw,1.1rem);font-weight:700;color:var(--a2);margin-bottom:4px;}
+.card .en{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--mut);margin-bottom:10px;direction:ltr;}
+.card p,.card li{color:var(--dim);line-height:1.85;font-size:clamp(.82rem,2vw,.92rem);}
+.card ul{padding-right:18px;}
 
-/* ── FORMULA BOX ── */
-.formula{background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent2);direction:ltr;text-align:center;letter-spacing:0.5px;}
-.formula span{color:var(--accent3);font-weight:700;}
+/* FORMULA */
+.formula{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:clamp(10px,2vw,14px) clamp(12px,3vw,18px);margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:clamp(.72rem,1.8vw,.86rem);color:var(--a2);direction:ltr;text-align:center;overflow-x:auto;}
+.formula b{color:var(--a3);}
 
-/* ── INFO GRID ── */
-.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0;}
-.info-item{background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.15);border-radius:12px;padding:16px;text-align:center;}
-.info-item .symbol{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--accent);display:block;}
-.info-item .name-ar{font-size:0.95rem;color:var(--text);margin:4px 0;}
-.info-item .name-en{font-size:0.75rem;color:var(--muted);direction:ltr;}
-.info-item .unit{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent3);margin-top:4px;}
+/* TABLE */
+.tscroll{overflow-x:auto;margin:12px 0;border-radius:10px;}
+table{width:100%;border-collapse:collapse;min-width:380px;font-size:clamp(.72rem,1.8vw,.88rem);}
+th{background:rgba(79,142,247,.15);color:var(--a1);padding:9px 12px;text-align:right;border:1px solid var(--brd);white-space:nowrap;}
+td{padding:9px 12px;border:1px solid var(--brd);color:var(--dim);}
+td:nth-child(2){font-family:'JetBrains Mono',monospace;color:var(--a2);direction:ltr;text-align:left;white-space:nowrap;}
+tr:nth-child(even) td{background:rgba(255,255,255,.02);}
 
-/* ── DIM TABLE ── */
-.dim-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:0.9rem;}
-.dim-table th{background:rgba(59,130,246,0.15);color:var(--accent);padding:10px 14px;text-align:right;border:1px solid var(--border);}
-.dim-table td{padding:10px 14px;border:1px solid var(--border);color:var(--dim);}
-.dim-table td:last-child,.dim-table td:nth-child(2){font-family:'JetBrains Mono',monospace;color:var(--accent2);direction:ltr;text-align:left;}
-.dim-table tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+/* NOTE */
+.note{background:rgba(245,158,11,.07);border-right:3px solid var(--a3);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;color:var(--dim);font-size:clamp(.8rem,2vw,.88rem);line-height:1.85;}
+.note b{color:var(--a3);}
+.ok{background:rgba(16,185,129,.07);border-right:3px solid var(--a4);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;color:var(--a4);font-size:clamp(.8rem,2vw,.88rem);}
 
-/* ── SVG DIAGRAM ── */
-.diagram-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin:20px 0;text-align:center;}
-.diagram-wrap .d-title{color:var(--accent2);font-size:0.85rem;margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
-.diagram-wrap svg{max-width:100%;height:auto;}
+/* EXERCISES */
+.ex-hdr{display:flex;align-items:center;gap:10px;margin:28px 0 16px;flex-wrap:wrap;}
+.lvl{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 12px;border-radius:20px;white-space:nowrap;}
+.l1{background:rgba(16,185,129,.15);color:var(--a4);border:1px solid rgba(16,185,129,.3);}
+.l2{background:rgba(245,158,11,.15);color:var(--a3);border:1px solid rgba(245,158,11,.3);}
+.l3{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.ex-hdr h3{font-size:clamp(1rem,2.5vw,1.2rem);font-weight:700;}
 
-/* ── EXERCISES ── */
-.ex-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
-.ex-header .badge{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;border-radius:20px;white-space:nowrap;}
-.ex-header h2{font-size:1.4rem;font-weight:700;}
+.qcard{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:clamp(14px,3vw,20px);margin-bottom:14px;transition:.25s;}
+.qcard:hover{border-color:rgba(79,142,247,.35);}
+.qcard .qn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--a3);margin-bottom:6px;}
+.qcard .qt{color:var(--tx);font-size:clamp(.85rem,2vw,.95rem);line-height:1.8;margin:6px 0;}
+.qcard .qe{color:var(--mut);font-size:.78rem;font-family:'JetBrains Mono',monospace;direction:ltr;margin-bottom:10px;word-break:break-word;}
 
-.ex-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px;transition:border-color .3s;}
-.ex-card:hover{border-color:rgba(59,130,246,0.4);}
-.ex-card .q-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent3);margin-bottom:8px;letter-spacing:1px;}
-.ex-card .q-level{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;margin-right:8px;}
-.level-easy{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
-.level-med{background:rgba(245,158,11,0.15);color:var(--accent3);border:1px solid rgba(245,158,11,0.3);}
-.level-hard{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
-.ex-card .q-text{color:var(--text);line-height:1.8;margin:10px 0;font-size:0.95rem;}
-.ex-card .q-en{color:var(--muted);font-size:0.82rem;direction:ltr;font-family:'JetBrains Mono',monospace;margin-bottom:12px;}
+/* MCQ */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;}
+.opt{background:var(--surf);border:1px solid var(--brd);border-radius:8px;padding:9px 12px;cursor:pointer;color:var(--dim);font-size:clamp(.78rem,1.8vw,.86rem);transition:.2s;text-align:right;}
+.opt:hover{border-color:var(--a1);color:var(--tx);}
+.opt.ok2{background:rgba(16,185,129,.1);border-color:var(--a4);color:var(--a4);}
+.opt.no{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red);}
+.opt.done{pointer-events:none;}
 
-/* MCQ options */
-.options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
-.opt{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;color:var(--dim);font-size:0.88rem;transition:all .25s;text-align:right;}
-.opt:hover{border-color:var(--accent);color:var(--text);}
-.opt.correct{background:rgba(16,185,129,0.1);border-color:var(--green);color:var(--green);}
-.opt.wrong{background:rgba(239,68,68,0.1);border-color:var(--red);color:var(--red);}
-.opt.revealed{pointer-events:none;}
+/* ANSWER */
+.show-btn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:transparent;border:1px solid var(--brd);color:var(--mut);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;transition:.2s;}
+.show-btn:hover{border-color:var(--a1);color:var(--a1);}
+.ans-box{display:none;margin-top:10px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px 14px;color:var(--a4);font-size:clamp(.8rem,1.8vw,.88rem);line-height:1.9;}
+.ans-box.vis{display:block;animation:up .3s ease;}
+.ans-box .ae{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:rgba(16,185,129,.6);direction:ltr;margin-top:6px;word-break:break-word;}
 
-/* Show answer btn */
-.show-ans{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;transition:all .25s;}
-.show-ans:hover{border-color:var(--accent);color:var(--accent);}
-.answer-box{display:none;margin-top:12px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px 16px;color:var(--green);font-size:0.9rem;line-height:1.8;}
-.answer-box.visible{display:block;animation:fadeUp .3s ease;}
-.answer-box .ans-en{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:rgba(16,185,129,0.7);direction:ltr;margin-top:6px;}
+/* BLANK (workbook style) */
+.blank{border:none;border-bottom:2px dotted var(--brd);background:transparent;width:100%;padding:8px 4px;color:var(--tx);font-family:'Cairo',sans-serif;font-size:14px;margin:6px 0;direction:rtl;}
+.blank:focus{outline:none;border-bottom-color:var(--a1);}
 
-/* free input */
-.free-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;margin-top:10px;direction:ltr;resize:none;}
-.free-input:focus{outline:none;border-color:var(--accent);}
-.check-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;margin-top:8px;transition:opacity .2s;}
-.check-btn:hover{opacity:0.85;}
-
-/* progress bar */
-.progress-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:30px;display:flex;align-items:center;gap:16px;}
-.progress-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease;width:0%;}
-.progress-text{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent2);white-space:nowrap;}
-
-/* ── NOTE CALLOUT ── */
-.note{background:rgba(245,158,11,0.07);border-right:4px solid var(--accent3);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;color:var(--dim);font-size:0.9rem;line-height:1.8;}
-.note strong{color:var(--accent3);}
-
-/* ── VECTOR DIAGRAM INTERACTIVE ── */
-.vec-canvas-wrap{position:relative;display:inline-block;}
-canvas{border-radius:12px;background:#0d1117;}
-
-/* ── FOOTER ── */
-footer{text-align:center;padding:30px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);}
-footer span{color:var(--accent);}
-
-/* scrollbar */
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-
-@media(max-width:600px){
-  .options{grid-template-columns:1fr;}
-  .info-grid{grid-template-columns:1fr 1fr;}
+/* RESPONSIVE */
+@media(max-width:640px){
+  .opts{grid-template-columns:1fr;}
+  nav{gap:4px;}
+  .nav-btn{font-size:11px;padding:6px 10px;}
 }
+@media(max-width:380px){
+  nav{flex-direction:column;align-items:stretch;}
+  .nav-btn{text-align:center;}
+}
+
+footer{text-align:center;padding:24px;color:var(--mut);font-size:11px;border-top:1px solid var(--brd);margin-top:20px;}
 </style>
 </head>
 <body>
 
-<!-- HERO -->
-<div class="hero" style="position:relative;z-index:1;">
-  <div class="hero-badge">UST · FACULTY OF ENGINEERING · PHYSICS 1</div>
-  <h1>مرجع الفيزياء ١</h1>
-  <p class="en">Physics 1 — Complete Study Reference</p>
-  <p class="sub">الأبعاد والتحليل البعدي · المتجهات والعمليات عليها</p>
-</div>
+<header>
+  <div class="badge">UST · FACULTY OF ENGINEERING · PHYSICS 1 · 2025</div>
+  <h1>مرجع الفيزياء التفاعلي ثلاثي الأبعاد</h1>
+  <p class="sub">Interactive 3D Physics Study Guide — All Tutorials</p>
+</header>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="showTab('dim')">📐 التحليل البعدي</button>
-  <button class="tab" onclick="showTab('vec')">➡️ المتجهات</button>
-  <button class="tab" onclick="showTab('ex1')">🧮 تمارين الأبعاد</button>
-  <button class="tab" onclick="showTab('ex2')">🧮 تمارين المتجهات</button>
-</div>
+<nav id="nav">
+  <button class="nav-btn on" onclick="pg('dim',this)">📐 الأبعاد</button>
+  <button class="nav-btn" onclick="pg('vec',this)">➡️ المتجهات</button>
+  <button class="nav-btn" onclick="pg('circ',this)">🔄 الحركة الدائرية</button>
+  <button class="nav-btn" onclick="pg('mom',this)">💥 الزخم</button>
+  <button class="nav-btn" onclick="pg('work',this)">⚡ الشغل والطاقة</button>
+  <button class="nav-btn" onclick="pg('wave',this)">〰️ الموجات</button>
+  <button class="nav-btn" onclick="pg('heat',this)">🌡️ الحرارة</button>
+</nav>
 
-<!-- ═══════════════ TAB 1: DIMENSIONAL ANALYSIS ═══════════════ -->
-<div class="section active" id="tab-dim">
-  <div class="ch-title">
-    <h2>الكميات الأساسية والتحليل البعدي</h2>
-    <p class="en-title">Basic Quantities & Dimensional Analysis</p>
-    <div class="divider"></div>
+<!-- ═══════════════ DIMENSIONS ═══════════════ -->
+<div class="pg on" id="p-dim">
+  <div class="sec-title"><h2>الوحدات والأبعاد</h2><p>Units & Dimensions — Tutorial 1</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">🔷 3D — Dimensional Space</div>
+    <canvas id="cvDim" height="300"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="dimScene('axes')">المحاور</button>
+      <button class="sc-btn" onclick="dimScene('cube')">مكعب الأبعاد</button>
+      <button class="sc-btn" onclick="dimScene('spin')">دوران</button>
+    </div>
   </div>
 
-  <!-- Basic Quantities -->
   <div class="card">
-    <h3>🔷 الكميات الأساسية — Basic Quantities</h3>
-    <p class="en-h">The three fundamental dimensions in mechanics</p>
-    <p>البُعد هو طبيعة الكمية الفيزيائية — فهو يصف ماهية الشيء لا قيمته العددية. يُرمز للأبعاد بأقواس مربعة.</p>
-    <p style="direction:ltr;font-size:0.85rem;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;">Dimension denotes the physical nature of a quantity, written in square brackets.</p>
-
-    <div class="info-grid" style="margin-top:20px;">
-      <div class="info-item">
-        <span class="symbol">[L]</span>
-        <div class="name-ar">الطول</div>
-        <div class="name-en">Length</div>
-        <div class="unit">SI unit: meter (m)</div>
-      </div>
-      <div class="info-item">
-        <span class="symbol">[M]</span>
-        <div class="name-ar">الكتلة</div>
-        <div class="name-en">Mass</div>
-        <div class="unit">SI unit: kilogram (kg)</div>
-      </div>
-      <div class="info-item">
-        <span class="symbol">[T]</span>
-        <div class="name-ar">الزمن</div>
-        <div class="name-en">Time</div>
-        <div class="unit">SI unit: second (s)</div>
-      </div>
-    </div>
-    <div class="note">
-      <strong>⚠️ ملاحظة:</strong> كثير من الكميات الفيزيائية تكون <strong>لا بُعدية</strong> (Dimensionless) مثل: الأعداد النقية، نسبة كميتين متشابهتين، الزوايا، وثوابت مثل π.
-    </div>
+    <h3>🔷 الكميات الأساسية الثلاث</h3>
+    <p class="en">The three fundamental dimensions — L, M, T</p>
+    <p>كل كمية فيزيائية يمكن التعبير عنها بتركيبة من ثلاثة أبعاد أساسية:</p>
+    <div class="tscroll"><table>
+      <tr><th>البُعد</th><th>الرمز</th><th>المعنى</th><th>وحدة SI</th></tr>
+      <tr><td>الطول</td><td>[L]</td><td>Length — المسافة أو الإزاحة</td><td>meter (m)</td></tr>
+      <tr><td>الكتلة</td><td>[M]</td><td>Mass — كمية المادة</td><td>kilogram (kg)</td></tr>
+      <tr><td>الزمن</td><td>[T]</td><td>Time — الفترة الزمنية</td><td>second (s)</td></tr>
+    </table></div>
+    <div class="note"><b>لا بُعدية (Dimensionless):</b> الزوايا، π، النسب بين كميتين متشابهتين، وحيد القيم مثل ln وlog.</div>
   </div>
 
-  <!-- Derived Quantities Table -->
   <div class="card">
-    <h3>📊 أبعاد الكميات المشتقة — Derived Quantities</h3>
-    <p class="en-h">Every derived quantity is built from combinations of L, M, T</p>
-    <p>كل كمية مشتقة يمكن التعبير عنها كتركيبة جبرية من الكميات الأساسية الثلاث.</p>
-    <table class="dim-table" style="margin-top:16px;">
-      <thead>
-        <tr><th>الكمية</th><th>الأبعاد</th><th>وحدة SI</th><th>الاشتقاق</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>المساحة (Area)</td><td>[L²]</td><td>m²</td><td>طول × عرض</td></tr>
-        <tr><td>الحجم (Volume)</td><td>[L³]</td><td>m³</td><td>طول × عرض × ارتفاع</td></tr>
-        <tr><td>السرعة (Velocity)</td><td>[L T⁻¹]</td><td>m/s</td><td>إزاحة ÷ زمن</td></tr>
-        <tr><td>التسارع (Acceleration)</td><td>[L T⁻²]</td><td>m/s²</td><td>سرعة ÷ زمن</td></tr>
-        <tr><td>الكثافة (Density)</td><td>[M L⁻³]</td><td>kg/m³</td><td>كتلة ÷ حجم</td></tr>
-        <tr><td>الزخم (Momentum)</td><td>[M L T⁻¹]</td><td>kg·m/s</td><td>كتلة × سرعة</td></tr>
-        <tr><td>القوة (Force)</td><td>[M L T⁻²]</td><td>N</td><td>كتلة × تسارع</td></tr>
-        <tr><td>الشغل / الطاقة (Energy)</td><td>[M L² T⁻²]</td><td>J</td><td>قوة × إزاحة</td></tr>
-        <tr><td>القدرة (Power)</td><td>[M L² T⁻³]</td><td>W</td><td>شغل ÷ زمن</td></tr>
-        <tr><td>الضغط (Pressure)</td><td>[M L⁻¹ T⁻²]</td><td>Pa</td><td>قوة ÷ مساحة</td></tr>
-        <tr><td>ثابت الزنبرك (Spring const.)</td><td>[M T⁻²]</td><td>N/m</td><td>F=kx ⟹ k=F/x</td></tr>
-      </tbody>
-    </table>
+    <h3>📊 جدول الكميات المشتقة</h3>
+    <p class="en">Derived quantities — built from L, M, T combinations</p>
+    <div class="tscroll"><table>
+      <tr><th>الكمية</th><th>الأبعاد</th><th>وحدة SI</th><th>الاشتقاق</th></tr>
+      <tr><td>الكثافة</td><td>[ML⁻³]</td><td>kg/m³</td><td>m/V</td></tr>
+      <tr><td>السرعة</td><td>[LT⁻¹]</td><td>m/s</td><td>d/t</td></tr>
+      <tr><td>التسارع</td><td>[LT⁻²]</td><td>m/s²</td><td>Δv/Δt</td></tr>
+      <tr><td>القوة</td><td>[MLT⁻²]</td><td>N</td><td>ma</td></tr>
+      <tr><td>الشغل/الطاقة</td><td>[ML²T⁻²]</td><td>J</td><td>F·d</td></tr>
+      <tr><td>القدرة</td><td>[ML²T⁻³]</td><td>W</td><td>E/t</td></tr>
+      <tr><td>الضغط</td><td>[ML⁻¹T⁻²]</td><td>Pa</td><td>F/A</td></tr>
+      <tr><td>الزخم</td><td>[MLT⁻¹]</td><td>kg·m/s</td><td>mv</td></tr>
+      <tr><td>معامل اللزوجة</td><td>[ML⁻¹T⁻¹]</td><td>Pa·s</td><td>F·d/(A·v)</td></tr>
+      <tr><td>التوتر السطحي</td><td>[MT⁻²]</td><td>N/m</td><td>F/L</td></tr>
+    </table></div>
   </div>
 
-  <!-- Derivation Examples -->
+  <!-- WORKBOOK Q1 -->
   <div class="card">
-    <h3>🔍 كيف نشتق الأبعاد — How to Derive Dimensions</h3>
-    <p class="en-h">Step-by-step derivation of common quantities</p>
+    <h3>📖 مسائل الكراسة — Workbook Problems</h3>
+    <p class="en">From the official tutorial workbook — fill in the blanks</p>
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">S1. اشتق الصيغة البعدية لـ Power (القدرة)</p>
+    <input class="blank" placeholder="اكتب خطوات الاشتقاق هنا...">
+    <button class="show-btn" onclick="tog('s1')">💡 الحل</button>
+    <div class="ans-box" id="s1">
+      القدرة = شغل ÷ زمن = Force × distance / time<br>
+      [Power] = [F][L]/[T] = [MLT⁻²][L]/[T]<br>
+      <b>[Power] = [ML²T⁻³]</b> → وحدة SI: Watt (W)
+      <div class="ae">Power = Work/Time = [ML²T⁻²]/[T] = [ML²T⁻³]</div>
+    </div>
 
-    <p style="font-weight:600;color:var(--text);margin:14px 0 6px;">① السرعة (Velocity)</p>
-    <div class="formula">v = displacement / time &nbsp;⟹&nbsp; <span>[v] = L / T = [L T⁻¹]</span></div>
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">S2. اشتق بُعد معامل اللزوجة: η = F·d / (A·v)</p>
+    <input class="blank" placeholder="اكتب الاشتقاق خطوة بخطوة...">
+    <button class="show-btn" onclick="tog('s2')">💡 الحل</button>
+    <div class="ans-box" id="s2">
+      [η] = [F][d] / ([A][v])<br>
+      = [MLT⁻²][L] / [L²][LT⁻¹]<br>
+      = [ML²T⁻²] / [L³T⁻¹]<br>
+      <b>[η] = [ML⁻¹T⁻¹]</b> → وحدة: Pa·s
+      <div class="ae">[η] = MLT⁻²·L / (L²·LT⁻¹) = ML⁻¹T⁻¹</div>
+    </div>
 
-    <p style="font-weight:600;color:var(--text);margin:14px 0 6px;">② التسارع (Acceleration)</p>
-    <div class="formula">a = Δv / Δt &nbsp;⟹&nbsp; <span>[a] = (L T⁻¹) / T = [L T⁻²]</span></div>
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">S3. تحقق من صحة: v² = u² + 2as</p>
+    <input class="blank" placeholder="تحقق من الأبعاد لكل طرف...">
+    <button class="show-btn" onclick="tog('s3')">💡 الحل</button>
+    <div class="ans-box" id="s3">
+      يسار: [v²] = (LT⁻¹)² = <b>L²T⁻²</b><br>
+      يمين: [u²] = L²T⁻² ✓ &nbsp;|&nbsp; [2as] = (LT⁻²)(L) = L²T⁻² ✓<br>
+      جميع الحدود لها نفس البعد → <b style="color:var(--a4);">المعادلة صحيحة بعدياً ✓</b>
+      <div class="ae">All terms = [L²T⁻²] ✓ Dimensionally correct.</div>
+    </div>
 
-    <p style="font-weight:600;color:var(--text);margin:14px 0 6px;">③ القوة (Force): F = ma</p>
-    <div class="formula">[F] = [M][LT⁻²] = <span>[M L T⁻²]</span></div>
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">S4. في معادلة Van der Waals: (P + a/V²)(V - b) = RT. أوجد أبعاد a وb.</p>
+    <input class="blank" placeholder="استخدم مبدأ التجانس البُعدي...">
+    <button class="show-btn" onclick="tog('s4')">💡 الحل</button>
+    <div class="ans-box" id="s4">
+      <b>إيجاد [a]:</b> يُضاف a/V² للضغط P → لهما نفس البعد<br>
+      [a/V²] = [P] → [a] = [P][V²] = [ML⁻¹T⁻²][L⁶] = <b>[ML⁵T⁻²]</b><br><br>
+      <b>إيجاد [b]:</b> يُطرح b من الحجم V → [b] = [V] = <b>[L³]</b>
+      <div class="ae">[a] = ML⁵T⁻² | [b] = L³</div>
+    </div>
 
-    <p style="font-weight:600;color:var(--text);margin:14px 0 6px;">④ الضغط (Pressure): P = F/A</p>
-    <div class="formula">[P] = [M L T⁻²] / [L²] = <span>[M L⁻¹ T⁻²]</span></div>
-
-    <p style="font-weight:600;color:var(--text);margin:14px 0 6px;">⑤ الطاقة (Energy): E = F × d</p>
-    <div class="formula">[E] = [M L T⁻²][L] = <span>[M L² T⁻²]</span></div>
-  </div>
-
-  <!-- Uses of Dimensional Analysis -->
-  <div class="card">
-    <h3>⚙️ استخدامات التحليل البعدي — Uses of Dimensional Analysis</h3>
-    <p class="en-h">3 main applications you must know</p>
-    <ul style="margin-top:12px;">
-      <li style="margin-bottom:12px;"><strong style="color:var(--accent2);">أ) التحقق من صحة المعادلة:</strong> إذا كانت أبعاد الطرفين متساوية → المعادلة صحيحة بُعدياً (لكن ليس بالضرورة صحيحة فيزيائياً!)
-        <br><span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--muted);direction:ltr;">Check equation validity — dimensional match is necessary but not sufficient.</span></li>
-      <li style="margin-bottom:12px;"><strong style="color:var(--accent2);">ب) اشتقاق معادلة:</strong> يمكن إيجاد العلاقة بين الكميات بدون تجربة عن طريق مطابقة الأبعاد.
-        <br><span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--muted);direction:ltr;">Derive formulas by matching dimensions on both sides.</span></li>
-      <li><strong style="color:var(--accent2);">ج) إيجاد وحدات الكميات المشتقة:</strong> تحديد وحدة أي كمية من الصيغة الرياضية لها.
-        <br><span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--muted);direction:ltr;">Find the units of a derived quantity from its defining equation.</span></li>
-    </ul>
-    <div class="note">
-      <strong>مثال على التحقق:</strong> هل المعادلة d = vt² صحيحة؟<br>
-      الطرف الأيسر: [d] = L &nbsp;|&nbsp; الطرف الأيمن: [vt²] = (L/T)×T² = L·T ≠ L<br>
-      → الأبعاد لا تتطابق ∴ المعادلة <strong style="color:var(--red);">خاطئة ✗</strong>
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">S5. في: v = At + b/(t+c) أوجد أبعاد A و b و c.</p>
+    <input class="blank" placeholder="طابق أبعاد كل حد مع السرعة...">
+    <button class="show-btn" onclick="tog('s5')">💡 الحل</button>
+    <div class="ans-box" id="s5">
+      [v] = [LT⁻¹]<br>
+      <b>[A]:</b> [At] = [v] → [A][T] = LT⁻¹ → <b>[A] = LT⁻²</b> (تسارع)<br>
+      <b>[c]:</b> يُضاف لـ t → [c] = <b>[T]</b><br>
+      <b>[b]:</b> [b/(t+c)] = [v] → [b]/[T] = LT⁻¹ → <b>[b] = L</b>
+      <div class="ae">[A]=LT⁻², [b]=L, [c]=T</div>
     </div>
   </div>
 
-  <!-- Pendulum Example -->
-  <div class="card">
-    <h3>🕰️ مثال كلاسيكي — البندول البسيط</h3>
-    <p class="en-h">Pendulum period: use dimensional analysis to find the formula</p>
-    <p>فترة البندول P تعتمد على الطول d والتسارع الجاذبي g. أي صيغة صحيحة؟</p>
-    <div class="diagram-wrap" style="margin-top:16px;">
-      <div class="d-title">Pendulum — Which formula is correct?</div>
-      <svg width="500" height="180" viewBox="0 0 500 180">
-        <!-- Formula A -->
-        <rect x="10" y="20" width="140" height="60" rx="8" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
-        <text x="80" y="44" text-anchor="middle" fill="#ef4444" font-size="12" font-family="JetBrains Mono">(a) P = 2π(dg)²</text>
-        <text x="80" y="62" text-anchor="middle" fill="#ef4444" font-size="10" font-family="JetBrains Mono">[L⁴/T⁴] ≠ T ✗</text>
-        <text x="80" y="76" text-anchor="middle" fill="#ef4444" font-size="10">خاطئة</text>
+  <!-- EXERCISES DIMENSIONS -->
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>تمارين إضافية — سهل</h3></div>
 
-        <!-- Formula B -->
-        <rect x="180" y="20" width="140" height="60" rx="8" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
-        <text x="250" y="44" text-anchor="middle" fill="#ef4444" font-size="12" font-family="JetBrains Mono">(b) P = 2π(d/g)</text>
-        <text x="250" y="62" text-anchor="middle" fill="#ef4444" font-size="10" font-family="JetBrains Mono">[T²] ≠ T ✗</text>
-        <text x="250" y="76" text-anchor="middle" fill="#ef4444" font-size="10">خاطئة</text>
-
-        <!-- Formula C -->
-        <rect x="350" y="20" width="140" height="60" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="2"/>
-        <text x="420" y="44" text-anchor="middle" fill="#10b981" font-size="12" font-family="JetBrains Mono">(c) P = 2π√(d/g)</text>
-        <text x="420" y="62" text-anchor="middle" fill="#10b981" font-size="10" font-family="JetBrains Mono">√(L / L/T²) = T ✓</text>
-        <text x="420" y="76" text-anchor="middle" fill="#10b981" font-size="10">صحيحة ✓</text>
-
-        <!-- Pendulum drawing -->
-        <line x1="250" y1="95" x2="250" y2="100" stroke="#3b82f6" stroke-width="2"/>
-        <line x1="250" y1="100" x2="220" y2="165" stroke="#94a3b8" stroke-width="2"/>
-        <circle cx="220" cy="168" r="10" fill="#3b82f6" opacity="0.7"/>
-        <text x="250" y="148" fill="#94a3b8" font-size="10" font-family="JetBrains Mono">d</text>
-        <text x="230" y="175" fill="#64748b" font-size="9" font-family="JetBrains Mono">g↓</text>
-      </svg>
-    </div>
-    <div class="formula">P = 2π √(d/g) &nbsp;|&nbsp; [P] = √(L / LT⁻²) = √(T²) = <span>T ✓</span></div>
-  </div>
-
-  <!-- Prefixes -->
-  <div class="card">
-    <h3>🔢 البادئات المهمة — SI Prefixes</h3>
-    <p class="en-h">Memorize these — they appear in every exam</p>
-    <div class="info-grid" style="margin-top:14px;">
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">n</span><div class="name-ar">نانو</div><div class="name-en">nano</div><div class="unit">10⁻⁹</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">μ</span><div class="name-ar">ميكرو</div><div class="name-en">micro</div><div class="unit">10⁻⁶</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">m</span><div class="name-ar">ملي</div><div class="name-en">milli</div><div class="unit">10⁻³</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">c</span><div class="name-ar">سنتي</div><div class="name-en">centi</div><div class="unit">10⁻²</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">k</span><div class="name-ar">كيلو</div><div class="name-en">kilo</div><div class="unit">10³</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">M</span><div class="name-ar">ميجا</div><div class="name-en">mega</div><div class="unit">10⁶</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">G</span><div class="name-ar">جيجا</div><div class="name-en">giga</div><div class="unit">10⁹</div></div>
-      <div class="info-item"><span class="symbol" style="font-size:1.3rem;">T</span><div class="name-ar">تيرا</div><div class="name-en">tera</div><div class="unit">10¹²</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ TAB 2: VECTORS ═══════════════ -->
-<div class="section" id="tab-vec">
-  <div class="ch-title">
-    <h2>المتجهات والعمليات عليها</h2>
-    <p class="en-title">Vectors & Vector Operations</p>
-    <div class="divider"></div>
-  </div>
-
-  <!-- Scalar vs Vector -->
-  <div class="card">
-    <h3>⚖️ الكميات السعرية والكميات المتجهة</h3>
-    <p class="en-h">Scalar vs Vector Quantities</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-      <div style="background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.2);border-radius:12px;padding:16px;">
-        <div style="color:var(--accent2);font-weight:700;margin-bottom:10px;">📦 الكمية السعرية (Scalar)</div>
-        <p style="font-size:0.88rem;color:var(--dim);">لها <strong style="color:var(--text);">مقدار فقط</strong> بدون اتجاه</p>
-        <p style="font-size:0.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace;direction:ltr;margin-top:4px;">Has magnitude only — no direction</p>
-        <hr style="border-color:var(--border);margin:10px 0;">
-        <p style="font-size:0.85rem;color:var(--dim);"><strong>أمثلة:</strong> الكتلة، الطاقة، درجة الحرارة، الزمن، السرعة الاتجاهية الإجمالية، الشحنة الكهربائية</p>
-      </div>
-      <div style="background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:16px;">
-        <div style="color:var(--accent);font-weight:700;margin-bottom:10px;">➡️ الكمية المتجهة (Vector)</div>
-        <p style="font-size:0.88rem;color:var(--dim);">لها <strong style="color:var(--text);">مقدار واتجاه</strong> معاً</p>
-        <p style="font-size:0.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace;direction:ltr;margin-top:4px;">Has both magnitude AND direction</p>
-        <hr style="border-color:var(--border);margin:10px 0;">
-        <p style="font-size:0.85rem;color:var(--dim);"><strong>أمثلة:</strong> الإزاحة، السرعة الاتجاهية (Velocity)، التسارع، القوة، الشدة الكهربائية</p>
-      </div>
+  <div class="qcard">
+    <div class="qn">D-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">ما هو بُعد الكثافة (Density)؟</div>
+    <div class="qe">What is the dimension of Density?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','D1')">أ) [ML²T⁻²]</div>
+      <div class="opt" onclick="mcq(this,'b','D1')">ب) [ML⁻³] ✓</div>
+      <div class="opt" onclick="mcq(this,'c','D1')">ج) [MLT⁻²]</div>
+      <div class="opt" onclick="mcq(this,'d','D1')">د) [ML⁻¹T⁻²]</div>
     </div>
   </div>
 
-  <!-- Types of Vectors -->
-  <div class="card">
-    <h3>🗂️ أنواع المتجهات — Types of Vectors</h3>
-    <p class="en-h">6 important types to know</p>
-    <table class="dim-table" style="margin-top:14px;">
-      <thead>
-        <tr><th>النوع</th><th>Type</th><th>التعريف</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>المتجه السالب</td><td>Negative Vector</td><td>نفس المقدار ولكن اتجاه معاكس تماماً — Same magnitude, opposite direction</td></tr>
-        <tr><td>المتجهان المتساويان</td><td>Equal Vectors</td><td>نفس المقدار ونفس الاتجاه — Same magnitude AND same direction</td></tr>
-        <tr><td>المتجه الوحدي</td><td>Unit Vector</td><td>مقداره = ١ فقط، يحدد الاتجاه — Â = A⃗/|A⃗|, magnitude = 1</td></tr>
-        <tr><td>المتجهات المتوازية</td><td>Collinear Vectors</td><td>نفس الاتجاه لكن مقادير مختلفة — Same direction, different magnitudes</td></tr>
-        <tr><td>المتجه الصفري</td><td>Zero Vector</td><td>مقداره = ٠، اتجاهه غير محدد — Magnitude = 0, direction arbitrary</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Vector Representation -->
-  <div class="card">
-    <h3>📐 تمثيل المتجه في الإحداثيات</h3>
-    <p class="en-h">Vector components and notation in 3D space</p>
-    <p>يُمثَّل المتجه في الفضاء الثلاثي بواسطة مركباته على المحاور الثلاثة:</p>
-    <div class="formula" style="margin:14px 0;">
-      <span>A⃗ = Aₓ î + A_y ĵ + A_z k̂</span>
-      <br><br>
-      |A⃗| = √(Aₓ² + A_y² + A_z²)
-    </div>
-    <div class="diagram-wrap">
-      <div class="d-title">مركبات المتجه — Vector Components</div>
-      <svg width="420" height="220" viewBox="0 0 420 220">
-        <!-- Axes -->
-        <defs>
-          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
-          </marker>
-          <marker id="arr-b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
-          </marker>
-          <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#10b981"/>
-          </marker>
-          <marker id="arr-y" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
-          </marker>
-        </defs>
-        <!-- x axis -->
-        <line x1="100" y1="160" x2="350" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
-        <text x="355" y="165" fill="#64748b" font-size="13" font-family="JetBrains Mono">x</text>
-        <!-- y axis -->
-        <line x1="100" y1="160" x2="100" y2="30" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
-        <text x="90" y="25" fill="#64748b" font-size="13" font-family="JetBrains Mono">y</text>
-        <!-- z axis (diagonal) -->
-        <line x1="100" y1="160" x2="30" y2="200" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
-        <text x="15" y="210" fill="#64748b" font-size="13" font-family="JetBrains Mono">z</text>
-
-        <!-- Vector A -->
-        <line x1="100" y1="160" x2="300" y2="60" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arr-b)"/>
-        <text x="205" y="90" fill="#3b82f6" font-size="13" font-family="JetBrains Mono" transform="rotate(-25,205,90)">A⃗</text>
-
-        <!-- Aₓ component -->
-        <line x1="100" y1="160" x2="300" y2="160" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr-g)"/>
-        <text x="190" y="178" fill="#10b981" font-size="11" font-family="JetBrains Mono">Aₓ</text>
-        <!-- Ay component -->
-        <line x1="300" y1="160" x2="300" y2="60" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr-y)"/>
-        <text x="306" y="115" fill="#f59e0b" font-size="11" font-family="JetBrains Mono">Ay</text>
-
-        <!-- Angle -->
-        <path d="M140,160 A40,40 0 0,0 128,130" fill="none" stroke="#64748b" stroke-width="1"/>
-        <text x="143" y="148" fill="#94a3b8" font-size="11" font-family="JetBrains Mono">θ</text>
-
-        <!-- formulas -->
-        <text x="10" y="30" fill="#94a3b8" font-size="10" font-family="JetBrains Mono">Aₓ = |A|cos θ</text>
-        <text x="10" y="45" fill="#94a3b8" font-size="10" font-family="JetBrains Mono">Ay = |A|sin θ</text>
-      </svg>
-    </div>
-    <div class="formula">
-      Aₓ = |A| cos θ &nbsp;&nbsp;|&nbsp;&nbsp; Aᵧ = |A| sin θ<br><br>
-      θ = tan⁻¹(Aᵧ / Aₓ)
+  <div class="qcard">
+    <div class="qn">D-002 <span class="lvl l1">سهل</span></div>
+    <div class="qt">[ML⁻¹T⁻²] هو بُعد أي كمية؟</div>
+    <div class="qe">[ML⁻¹T⁻²] is the dimension of?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','D2')">أ) القوة</div>
+      <div class="opt" onclick="mcq(this,'b','D2')">ب) الطاقة</div>
+      <div class="opt" onclick="mcq(this,'c','D2')">ج) الضغط / مودلوس المرونة ✓</div>
+      <div class="opt" onclick="mcq(this,'d','D2')">د) الزخم</div>
     </div>
   </div>
 
-  <!-- Vector Addition -->
-  <div class="card">
-    <h3>➕ جمع المتجهات — Vector Addition</h3>
-    <p class="en-h">Triangle Law & Component Method</p>
-    <p style="margin-bottom:12px;">يمكن جمع المتجهات بطريقتين رئيسيتين:</p>
-
-    <p style="font-weight:700;color:var(--accent2);margin-bottom:6px;">① قانون المثلث (Graphical / Triangle Law)</p>
-    <p style="color:var(--dim);font-size:0.9rem;">ضع ذيل الثاني عند رأس الأول، المحصلة هي الضلع الثالث.</p>
-    <div class="formula">
-      R = √(A² + B² + 2AB cosθ)
-      <br>
-      tan β = (B sinθ) / (A + B cosθ)
-    </div>
-
-    <p style="font-weight:700;color:var(--accent2);margin:14px 0 6px;">② طريقة المركبات (Component Method)</p>
-    <div class="formula">
-      R⃗ = (Aₓ+Bₓ)î + (Aᵧ+Bᵧ)ĵ + (A_z+B_z)k̂<br><br>
-      |R⃗| = √(Rₓ² + Rᵧ² + R_z²)
-    </div>
-
-    <div class="diagram-wrap" style="margin-top:16px;">
-      <div class="d-title">Triangle Law — قانون المثلث</div>
-      <svg width="360" height="180" viewBox="0 0 360 180">
-        <defs>
-          <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#3b82f6"/></marker>
-          <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#f59e0b"/></marker>
-          <marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#10b981"/></marker>
-        </defs>
-        <!-- A -->
-        <line x1="60" y1="130" x2="200" y2="130" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#a1)"/>
-        <text x="125" y="148" fill="#3b82f6" font-size="13" font-family="JetBrains Mono" text-anchor="middle">A⃗</text>
-        <!-- B -->
-        <line x1="200" y1="130" x2="280" y2="55" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#a2)"/>
-        <text x="248" y="100" fill="#f59e0b" font-size="13" font-family="JetBrains Mono">B⃗</text>
-        <!-- R = A+B -->
-        <line x1="60" y1="130" x2="280" y2="55" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#a3)"/>
-        <text x="155" y="83" fill="#10b981" font-size="13" font-family="JetBrains Mono">R⃗ = A⃗+B⃗</text>
-        <!-- angle -->
-        <path d="M120,130 A60,60 0 0,0 110,100" fill="none" stroke="#64748b" stroke-width="1"/>
-        <text x="123" y="115" fill="#94a3b8" font-size="11" font-family="JetBrains Mono">θ</text>
-        <!-- labels -->
-        <text x="20" y="155" fill="#64748b" font-size="10" font-family="JetBrains Mono">P (start)</text>
-        <text x="280" y="48" fill="#64748b" font-size="10" font-family="JetBrains Mono">Q (end)</text>
-      </svg>
+  <div class="qcard">
+    <div class="qn">D-003 <span class="lvl l1">سهل</span></div>
+    <div class="qt">وحدة قياس السعة (Amplitude) الصوتية هي؟</div>
+    <div class="qe">Unit for measuring amplitude of sound?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','D3')">أ) Decibel ✓</div>
+      <div class="opt" onclick="mcq(this,'b','D3')">ب) Coulomb</div>
+      <div class="opt" onclick="mcq(this,'c','D3')">ج) Pascal</div>
+      <div class="opt" onclick="mcq(this,'d','D3')">د) Hertz</div>
     </div>
   </div>
 
-  <!-- Dot and Cross Product -->
-  <div class="card">
-    <h3>✖️ ضرب المتجهات — Vector Multiplication</h3>
-    <p class="en-h">Dot product (scalar) and Cross product (vector)</p>
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط — Medium</h3></div>
 
-    <p style="font-weight:700;color:var(--accent2);margin:12px 0 6px;">① الضرب النقطي (Dot Product) → نتيجته عددية</p>
-    <p style="color:var(--dim);font-size:0.9rem;">حاصل ضرب مقداري المتجهين في جيب تمام الزاوية بينهما.</p>
-    <div class="formula">
-      A⃗ · B⃗ = |A||B| cosθ
-      <br><br>
-      A⃗ · B⃗ = AₓBₓ + AᵧBᵧ + A_zB_z
+  <div class="qcard">
+    <div class="qn">D-004 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">x = at + bt² - ct³. ما بُعد c؟</div>
+    <div class="qe">x = at+bt²-ct³. Find dimension of c.</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','D4')">أ) [LT⁻²]</div>
+      <div class="opt" onclick="mcq(this,'b','D4')">ب) [T⁻³]</div>
+      <div class="opt" onclick="mcq(this,'c','D4')">ج) [LT⁻³] ✓</div>
+      <div class="opt" onclick="mcq(this,'d','D4')">د) [L²T⁻³]</div>
     </div>
-    <div class="note">
-      <strong>خاصية مهمة:</strong> إذا كان A⃗ · B⃗ = 0 فإن المتجهين <strong>متعامدان</strong> (θ=90°).<br>
-      î·î = ĵ·ĵ = k̂·k̂ = 1 &nbsp;&nbsp;|&nbsp;&nbsp; î·ĵ = ĵ·k̂ = î·k̂ = 0
-    </div>
-
-    <p style="font-weight:700;color:var(--accent2);margin:16px 0 6px;">② الضرب الاتجاهي (Cross Product) → نتيجته متجه</p>
-    <p style="color:var(--dim);font-size:0.9rem;">مقداره = حاصل ضرب المقدارين × جيب الزاوية، واتجاهه عمودي على المستوى المحتوي لهما.</p>
-    <div class="formula">
-      A⃗ × B⃗ = |A||B| sinθ n̂<br><br>
-      |A⃗ × B⃗| = |A||B| sinθ
-    </div>
-    <div class="formula" style="font-size:0.78rem;">
-      î×ĵ = k̂ &nbsp;|&nbsp; ĵ×k̂ = î &nbsp;|&nbsp; k̂×î = ĵ<br>
-      ĵ×î = −k̂ &nbsp;|&nbsp; î×î = 0 &nbsp;|&nbsp; A⃗×B⃗ = −B⃗×A⃗
-    </div>
-    <div class="note">
-      <strong>خاصية مهمة:</strong> إذا كان |A⃗ × B⃗| = 0 فإن المتجهين <strong>متوازيان</strong> (θ=0° أو 180°).
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ TAB 3: EXERCISES - DIMENSIONS ═══════════════ -->
-<div class="section" id="tab-ex1">
-  <div class="ch-title">
-    <h2>تمارين التحليل البعدي</h2>
-    <p class="en-title">Dimensional Analysis Exercises</p>
-    <div class="divider"></div>
-  </div>
-
-  <div class="progress-bar">
-    <div class="progress-track"><div class="progress-fill" id="prog1"></div></div>
-    <div class="progress-text" id="prog1-text">0 / 0 إجابة صحيحة</div>
-  </div>
-
-  <!-- ══ EASY ══ -->
-  <div class="ex-header"><span class="badge">LEVEL 1</span><h2>سهل — Easy</h2></div>
-
-  <!-- Q1 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١ &nbsp;|&nbsp; Q-001 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">ما هو بُعد المساحة؟</div>
-    <div class="q-en">What is the dimension of Area?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q1')">أ) [L]</div>
-      <div class="opt" onclick="mcq(this,'b','Q1')">ب) [L²] ✓</div>
-      <div class="opt" onclick="mcq(this,'c','Q1')">ج) [L³]</div>
-      <div class="opt" onclick="mcq(this,'d','Q1')">د) [M L]</div>
+    <button class="show-btn" onclick="tog('D4s')">💡 التفسير</button>
+    <div class="ans-box" id="D4s">
+      [x]=L، كل حد يجب أن = L:<br>
+      [ct³]=L → [c]=L/T³ = <b>LT⁻³</b>
+      <div class="ae">[c]·T³ = L → [c] = LT⁻³</div>
     </div>
   </div>
 
-  <!-- Q2 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٢ &nbsp;|&nbsp; Q-002 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">ما هو بُعد السرعة؟</div>
-    <div class="q-en">What is the dimension of Velocity?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q2')">أ) [L T] </div>
-      <div class="opt" onclick="mcq(this,'b','Q2')">ب) [L T⁻²]</div>
-      <div class="opt" onclick="mcq(this,'c','Q2')">ج) [L T⁻¹] ✓</div>
-      <div class="opt" onclick="mcq(this,'d','Q2')">د) [M L T⁻¹]</div>
+  <div class="qcard">
+    <div class="qn">D-005 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">تحقق: هل v³ - u² = 2as² صحيحة بعدياً؟</div>
+    <div class="qe">Check: is v³ - u² = 2as² dimensionally correct?</div>
+    <button class="show-btn" onclick="tog('D5s')">💡 الحل</button>
+    <div class="ans-box" id="D5s">
+      [v³] = (LT⁻¹)³ = <b>L³T⁻³</b><br>
+      [u²] = (LT⁻¹)² = <b>L²T⁻²</b><br>
+      الحدان في اليسار لها أبعاد مختلفة → لا يمكن طرحهما!<br>
+      [2as²] = (LT⁻²)(L²) = L³T⁻²<br>
+      <b style="color:var(--red);">المعادلة خاطئة بعدياً ✗</b> — لا يمكن جمع/طرح كميات ذات أبعاد مختلفة.
+      <div class="ae">v³≠u² dimensionally → WRONG ✗</div>
     </div>
   </div>
 
-  <!-- Q3 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٣ &nbsp;|&nbsp; Q-003 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">ما هو بُعد التسارع؟</div>
-    <div class="q-en">What is the dimension of Acceleration?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q3')">أ) [L T⁻²] ✓</div>
-      <div class="opt" onclick="mcq(this,'b','Q3')">ب) [L T⁻¹]</div>
-      <div class="opt" onclick="mcq(this,'c','Q3')">ج) [M L T⁻²]</div>
-      <div class="opt" onclick="mcq(this,'d','Q3')">د) [L² T⁻²]</div>
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب — Hard</h3></div>
+
+  <div class="qcard">
+    <div class="qn">D-006 <span class="lvl l3">صعب</span></div>
+    <div class="qt">h = 2Td/(ρg cosθ) — حيث h ارتفاع الشعيرية، T توتر سطحي، d قطر الأنبوب، ρ كثافة، g تسارع جاذبي. تحقق بعدياً.</div>
+    <div class="qe">Check: h = 2Td/(ρg cosθ) by dimensional analysis. T=surface tension, d=diameter, ρ=density, g=gravity.</div>
+    <button class="show-btn" onclick="tog('D6s')">💡 الحل الكامل</button>
+    <div class="ans-box" id="D6s">
+      يسار: [h] = <b>L</b><br><br>
+      يمين:<br>
+      [T]=MT⁻² (توتر سطحي) | [d]=L | [ρ]=ML⁻³ | [g]=LT⁻²<br>
+      [2Td/(ρg)] = (MT⁻²)(L) / (ML⁻³)(LT⁻²)<br>
+      = ML·T⁻² / ML⁻²T⁻² = ML T⁻² × L²T² / M<br>
+      = <b>L³</b> ... ÷ [d(أسفل؟)] ← نراجع الصيغة:<br>
+      الصيغة الصحيحة: h = 2T cosθ/(ρgr) — r نصف القطر<br>
+      [2T/(ρgr)] = MT⁻² / (ML⁻³·LT⁻²·L) = MT⁻² / MT⁻² = <b>1</b> ← لا بُعدي ✗<br>
+      → h = 2T cosθ/(ρgr): [T/ρgr] = MT⁻²/(ML⁻³·LT⁻²·L)=MT⁻²/(ML⁻¹T⁻²)=L ✓<br>
+      <b style="color:var(--a4);">الصيغة صحيحة بعدياً ✓</b>
+      <div class="ae">LHS=[L], RHS=[MT⁻²/(ML⁻³·LT⁻²·L)]=[L] ✓</div>
     </div>
   </div>
 
-  <!-- Q4 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٤ &nbsp;|&nbsp; Q-004 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">ما هو بُعد القوة (F = ma)؟</div>
-    <div class="q-en">What is the dimension of Force?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q4')">أ) [M L² T⁻²]</div>
-      <div class="opt" onclick="mcq(this,'b','Q4')">ب) [M L T⁻²] ✓</div>
-      <div class="opt" onclick="mcq(this,'c','Q4')">ج) [M L T⁻¹]</div>
-      <div class="opt" onclick="mcq(this,'d','Q4')">د) [M² L T⁻²]</div>
-    </div>
-  </div>
-
-  <!-- Q5 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٥ &nbsp;|&nbsp; Q-005 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">الزاوية وعدد π هي كميات...</div>
-    <div class="q-en">Angles and the number π are...</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q5')">أ) ذات بعد [L]</div>
-      <div class="opt" onclick="mcq(this,'b','Q5')">ب) لا بُعدية (Dimensionless) ✓</div>
-      <div class="opt" onclick="mcq(this,'c','Q5')">ج) ذات بعد [M]</div>
-      <div class="opt" onclick="mcq(this,'d','Q5')">د) ذات بعد [T]</div>
-    </div>
-  </div>
-
-  <!-- Q6 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٦ &nbsp;|&nbsp; Q-006 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">وحدة القوة في نظام SI هي...</div>
-    <div class="q-en">The SI unit of force is...</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q6')">أ) Joule</div>
-      <div class="opt" onclick="mcq(this,'b','Q6')">ب) Pascal</div>
-      <div class="opt" onclick="mcq(this,'c','Q6')">ج) Newton ✓</div>
-      <div class="opt" onclick="mcq(this,'d','Q6')">د) Watt</div>
-    </div>
-  </div>
-
-  <!-- ══ MEDIUM ══ -->
-  <div class="ex-header" style="margin-top:30px;"><span class="badge" style="background:linear-gradient(135deg,var(--accent3),#f97316);">LEVEL 2</span><h2>متوسط — Medium</h2></div>
-
-  <!-- Q7 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٧ &nbsp;|&nbsp; Q-007 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">[ML⁻¹T⁻²] هو البُعد الخاص بـ...</div>
-    <div class="q-en">The quantity with dimension [ML⁻¹T⁻²] is...</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q7')">أ) الطاقة (Energy)</div>
-      <div class="opt" onclick="mcq(this,'b','Q7')">ب) الزخم (Momentum)</div>
-      <div class="opt" onclick="mcq(this,'c','Q7')">ج) الضغط (Pressure) ✓</div>
-      <div class="opt" onclick="mcq(this,'d','Q7')">د) القدرة (Power)</div>
-    </div>
-  </div>
-
-  <!-- Q8 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٨ &nbsp;|&nbsp; Q-008 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">من قانون هوك: F = -kx. ما هو بُعد ثابت الزنبرك k؟ (F: قوة، x: إزاحة)</div>
-    <div class="q-en">From Hooke's law F = -kx, find the dimension of the spring constant k.</div>
-    <button class="show-ans" onclick="toggleAns('ans8')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans8">
-      <strong>الحل خطوة بخطوة:</strong><br>
-      k = F / x<br>
-      [k] = [F] / [x] = [M L T⁻²] / [L]<br>
-      <strong>[k] = [M T⁻²]</strong><br>
-      <div class="ans-en">k = F/x → [k] = MLT⁻²/L = MT⁻² (i.e. N/m)</div>
-    </div>
-  </div>
-
-  <!-- Q9 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٩ &nbsp;|&nbsp; Q-009 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">هل المعادلة v² = 2as صحيحة بُعدياً؟ (v: سرعة، a: تسارع، s: مسافة)</div>
-    <div class="q-en">Is v² = 2as dimensionally correct?</div>
-    <button class="show-ans" onclick="toggleAns('ans9')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans9">
-      <strong>الطرف الأيسر:</strong> [v²] = (LT⁻¹)² = L²T⁻²<br>
-      <strong>الطرف الأيمن:</strong> [2as] = [a][s] = (LT⁻²)(L) = L²T⁻²<br>
-      L²T⁻² = L²T⁻² ✓<br>
-      <strong style="color:var(--green);">المعادلة صحيحة بُعدياً ✓</strong>
-      <div class="ans-en">Both sides have dimension [L²T⁻²] — dimensionally correct.</div>
-    </div>
-  </div>
-
-  <!-- Q10 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٠ &nbsp;|&nbsp; Q-010 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">الإزاحة x لجسيح تعطى بـ x = at + bt². ما هو بُعد كل من a و b؟</div>
-    <div class="q-en">x = at + bt². Find dimensions of a and b. (x: displacement, t: time)</div>
-    <button class="show-ans" onclick="toggleAns('ans10')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans10">
-      لكي تتطابق الأبعاد مع [x] = L:<br>
-      <strong>[at] = L ⟹ [a][T] = L ⟹ [a] = LT⁻¹</strong> (أي بُعد السرعة)<br>
-      <strong>[bt²] = L ⟹ [b][T²] = L ⟹ [b] = LT⁻²</strong> (أي بُعد التسارع)<br>
-      <div class="ans-en">[a] = LT⁻¹ (velocity) | [b] = LT⁻² (acceleration)</div>
-    </div>
-  </div>
-
-  <!-- Q11 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١١ &nbsp;|&nbsp; Q-011 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">ما هو بُعد الطاقة الحركية KE = ½mv²؟</div>
-    <div class="q-en">What is the dimension of kinetic energy KE = ½mv²?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','Q11')">أ) [M L T⁻²]</div>
-      <div class="opt" onclick="mcq(this,'b','Q11')">ب) [M L² T⁻²] ✓</div>
-      <div class="opt" onclick="mcq(this,'c','Q11')">ج) [M L² T⁻³]</div>
-      <div class="opt" onclick="mcq(this,'d','Q11')">د) [M² L² T⁻²]</div>
-    </div>
-  </div>
-
-  <!-- Q12 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٢ &nbsp;|&nbsp; Q-012 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">الإزاحة تعطى بـ x = A sin(ωt). ما هو بُعد ω؟ (t زمن، x إزاحة)</div>
-    <div class="q-en">In x = A sin(ωt), find the dimension of ω (angular frequency).</div>
-    <button class="show-ans" onclick="toggleAns('ans12')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans12">
-      الحجة في sin يجب أن تكون <strong>لا بُعدية</strong> (dimensionless).<br>
-      ∴ [ωt] = 1 (dimensionless)<br>
-      [ω][T] = 1<br>
-      <strong>[ω] = T⁻¹</strong> (rad/s)<br>
-      <div class="ans-en">Argument of sin must be dimensionless → [ω] = T⁻¹</div>
-    </div>
-  </div>
-
-  <!-- ══ HARD ══ -->
-  <div class="ex-header" style="margin-top:30px;"><span class="badge" style="background:linear-gradient(135deg,var(--red),#dc2626);">LEVEL 3</span><h2>صعب — Hard</h2></div>
-
-  <!-- Q13 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٣ &nbsp;|&nbsp; Q-013 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">التسارع a لجسيم يدور في دائرة يتناسب مع r^n و v^m. استخدم التحليل البُعدي لإيجاد n و m.</div>
-    <div class="q-en">Centripetal acceleration a ∝ rⁿ vᵐ. Use dimensional analysis to find n and m.</div>
-    <button class="show-ans" onclick="toggleAns('ans13')">💡 اظهر الحل الكامل</button>
-    <div class="answer-box" id="ans13">
-      نفرض: a = k rⁿ vᵐ<br>
-      الأبعاد: [a] = LT⁻²<br>
-      [k rⁿ vᵐ] = Lⁿ (LT⁻¹)ᵐ = L^(n+m) T^(-m)<br><br>
-      مطابقة الأبعاد:<br>
-      <strong>للزمن T:</strong> -2 = -m ⟹ <strong>m = 2</strong><br>
-      <strong>للطول L:</strong> 1 = n+m = n+2 ⟹ <strong>n = -1</strong><br><br>
-      ∴ <strong>a = k r⁻¹ v² = kv²/r</strong><br>
-      (هذه معادلة التسارع المركزي المعروفة!)<br>
-      <div class="ans-en">n = -1, m = 2 → a = v²/r (centripetal acceleration)</div>
-    </div>
-  </div>
-
-  <!-- Q14 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٤ &nbsp;|&nbsp; Q-014 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">أثبت باستخدام التحليل البعدي أن ثابت الجاذبية G في F = Gm₁m₂/r² له بُعد [M⁻¹L³T⁻²].</div>
-    <div class="q-en">Prove that gravitational constant G has dimension [M⁻¹L³T⁻²].</div>
-    <button class="show-ans" onclick="toggleAns('ans14')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans14">
-      من قانون الجاذبية: F = G m₁m₂/r²<br>
-      نعزل G: G = F r² / (m₁ m₂)<br><br>
-      [G] = [F][r²] / [m₁][m₂]<br>
-      [G] = (MLT⁻²)(L²) / (M)(M)<br>
-      [G] = ML³T⁻² / M²<br>
-      <strong>[G] = M⁻¹L³T⁻²</strong> ✓<br>
-      <div class="ans-en">G = Fr²/m₁m₂ → [G] = M⁻¹L³T⁻²</div>
-    </div>
-  </div>
-
-  <!-- Q15 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٥ &nbsp;|&nbsp; Q-015 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">البندول البسيط: فترته تعتمد على m (كتلة), l (طول), g (تسارع جاذبي). اشتق الصيغة P = k m^x l^y g^z.</div>
-    <div class="q-en">Simple pendulum period P depends on mass m, length l, gravity g. Find x, y, z in P = k m^x l^y g^z.</div>
-    <button class="show-ans" onclick="toggleAns('ans15')">💡 اظهر الحل الكامل</button>
-    <div class="answer-box" id="ans15">
-      [P] = T<br>
-      [m^x l^y g^z] = M^x · L^y · (LT⁻²)^z = M^x · L^(y+z) · T^(-2z)<br><br>
-      مطابقة الأبعاد مع T¹:<br>
-      <strong>M:</strong> 0 = x ⟹ <strong>x = 0</strong> (الكتلة لا تؤثر!)<br>
-      <strong>T:</strong> 1 = -2z ⟹ <strong>z = -½</strong><br>
-      <strong>L:</strong> 0 = y+z = y - ½ ⟹ <strong>y = ½</strong><br><br>
-      ∴ <strong>P = k √(l/g)</strong><br>
-      (والقيمة الحقيقية: k = 2π)<br>
-      <div class="ans-en">x=0, y=½, z=-½ → P = k√(l/g). Mass has NO effect!</div>
-    </div>
-  </div>
-
-  <!-- Q16 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٦ &nbsp;|&nbsp; Q-016 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">معادلة موجية: y = A sin(kx - ωt). ما أبعاد k؟ وما العلاقة بين k و ω والسرعة الموجية v؟</div>
-    <div class="q-en">Wave: y = A sin(kx - ωt). Find [k] and relate k, ω, wave speed v.</div>
-    <button class="show-ans" onclick="toggleAns('ans16')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans16">
-      الحجة (kx - ωt) يجب أن تكون لا بُعدية:<br>
-      [kx] = 1 ⟹ [k][L] = 1 ⟹ <strong>[k] = L⁻¹</strong> (عدد الموجة)<br>
-      [ωt] = 1 ⟹ [ω] = T⁻¹ (كما عرفنا سابقاً)<br><br>
-      سرعة الموجة: v = ω/k<br>
-      [v] = T⁻¹ / L⁻¹ = LT⁻¹ ✓ (أي بُعد سرعة صحيح)<br>
-      <strong>v = ω/k</strong><br>
-      <div class="ans-en">[k] = L⁻¹ (wave number), v = ω/k (wave speed)</div>
-    </div>
-  </div>
-
-  <!-- Q17 — Numerical -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٧ &nbsp;|&nbsp; Q-017 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">احسب: 5.00 km = ؟ mm &nbsp;|&nbsp; 3.50 μs = ؟ s (بالصيغة العلمية)</div>
-    <div class="q-en">Convert: 5.00 km to mm | 3.50 μs to s (scientific notation)</div>
-    <button class="show-ans" onclick="toggleAns('ans17')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ans17">
-      <strong>5.00 km → mm:</strong><br>
-      5.00 km × (10³ m/km) × (10³ mm/m) = 5.00 × 10⁶ mm<br><br>
-      <strong>3.50 μs → s:</strong><br>
-      3.50 μs × (10⁻⁶ s/μs) = 3.50 × 10⁻⁶ s<br>
-      <div class="ans-en">5.00 × 10⁶ mm | 3.50 × 10⁻⁶ s</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ TAB 4: EXERCISES - VECTORS ═══════════════ -->
-<div class="section" id="tab-ex2">
-  <div class="ch-title">
-    <h2>تمارين المتجهات</h2>
-    <p class="en-title">Vector Exercises</p>
-    <div class="divider"></div>
-  </div>
-
-  <!-- ══ EASY ══ -->
-  <div class="ex-header"><span class="badge">LEVEL 1</span><h2>سهل — Easy</h2></div>
-
-  <!-- Q1 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١ &nbsp;|&nbsp; V-001 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">أيٌّ من التالية كمية <strong>سعرية</strong>؟</div>
-    <div class="q-en">Which of the following is a SCALAR quantity?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V1')">أ) الإزاحة (Displacement)</div>
-      <div class="opt" onclick="mcq(this,'b','V1')">ب) القوة (Force)</div>
-      <div class="opt" onclick="mcq(this,'c','V1')">ج) الطاقة (Energy) ✓</div>
-      <div class="opt" onclick="mcq(this,'d','V1')">د) التسارع (Acceleration)</div>
-    </div>
-  </div>
-
-  <!-- Q2 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٢ &nbsp;|&nbsp; V-002 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">المتجه الوحدي لـ A⃗ يُحسب بـ...</div>
-    <div class="q-en">The unit vector  of A⃗ is calculated as...</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V2')">أ) Â = A⃗ × |A⃗|</div>
-      <div class="opt" onclick="mcq(this,'b','V2')">ب) Â = A⃗ / |A⃗| ✓</div>
-      <div class="opt" onclick="mcq(this,'c','V2')">ج) Â = |A⃗| + A⃗</div>
-      <div class="opt" onclick="mcq(this,'d','V2')">د) Â = |A⃗|²</div>
-    </div>
-  </div>
-
-  <!-- Q3 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٣ &nbsp;|&nbsp; V-003 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">ما مقدار المتجه A⃗ = 3î + 4ĵ؟</div>
-    <div class="q-en">Find the magnitude of A⃗ = 3î + 4ĵ</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V3')">أ) 7</div>
-      <div class="opt" onclick="mcq(this,'b','V3')">ب) 5 ✓</div>
-      <div class="opt" onclick="mcq(this,'c','V3')">ج) √7</div>
-      <div class="opt" onclick="mcq(this,'d','V3')">د) 25</div>
-    </div>
-  </div>
-
-  <!-- Q4 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٤ &nbsp;|&nbsp; V-004 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">إذا كان A⃗ = 2î − 3ĵ + 7k̂ وB⃗ = 5î + ĵ + 2k̂، أوجد A⃗ + B⃗</div>
-    <div class="q-en">If A⃗ = 2î−3ĵ+7k̂ and B⃗ = 5î+ĵ+2k̂, find A⃗+B⃗</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V4')">أ) 7î − 2ĵ + 9k̂ ✓</div>
-      <div class="opt" onclick="mcq(this,'b','V4')">ب) 3î − 4ĵ + 5k̂</div>
-      <div class="opt" onclick="mcq(this,'c','V4')">ج) 7î + 2ĵ − 9k̂</div>
-      <div class="opt" onclick="mcq(this,'d','V4')">د) 7î − 2ĵ − 9k̂</div>
-    </div>
-  </div>
-
-  <!-- Q5 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٥ &nbsp;|&nbsp; V-005 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">المتجه ذو المقدار الصفري يسمى...</div>
-    <div class="q-en">A vector with zero magnitude is called...</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V5')">أ) متجه وحدي (Unit vector)</div>
-      <div class="opt" onclick="mcq(this,'b','V5')">ب) متجه سالب (Negative vector)</div>
-      <div class="opt" onclick="mcq(this,'c','V5')">ج) متجه صفري (Zero vector) ✓</div>
-      <div class="opt" onclick="mcq(this,'d','V5')">د) متجه متوازٍ (Collinear vector)</div>
-    </div>
-  </div>
-
-  <!-- Q6 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٦ &nbsp;|&nbsp; V-006 <span class="q-level level-easy">سهل · Easy</span></div>
-    <div class="q-text">î · î = ?</div>
-    <div class="q-en">What is î · î (dot product of unit vectors)?</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V6')">أ) 0</div>
-      <div class="opt" onclick="mcq(this,'b','V6')">ب) 1 ✓</div>
-      <div class="opt" onclick="mcq(this,'c','V6')">ج) -1</div>
-      <div class="opt" onclick="mcq(this,'d','V6')">د) k̂</div>
-    </div>
-  </div>
-
-  <!-- ══ MEDIUM ══ -->
-  <div class="ex-header" style="margin-top:30px;"><span class="badge" style="background:linear-gradient(135deg,var(--accent3),#f97316);">LEVEL 2</span><h2>متوسط — Medium</h2></div>
-
-  <!-- Q7 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٧ &nbsp;|&nbsp; V-007 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">أوجد مكونتَي الإزاحة x و y لمتجه طوله 25.0 m عند زاوية 210°.</div>
-    <div class="q-en">Find x and y components of 25.0 m displacement at 210°.</div>
-    <button class="show-ans" onclick="toggleAns('ansV7')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV7">
-      210° = 180° + 30° → الزاوية المرجعية = 30° (في الربع الثالث)<br>
-      xₓ = −25.0 × cos 30° = −25.0 × 0.866 = <strong>−21.7 m</strong><br>
-      yᵧ = −25.0 × sin 30° = −25.0 × 0.500 = <strong>−12.5 m</strong><br>
-      كلا المركبتين سالبتان (الربع الثالث) ✓
-      <div class="ans-en">xₓ = −21.7 m, yᵧ = −12.5 m (third quadrant)</div>
-    </div>
-  </div>
-
-  <!-- Q8 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٨ &nbsp;|&nbsp; V-008 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">A⃗ = 2î − 3ĵ + 7k̂ وB⃗ = 5î + ĵ + 2k̂. أوجد A⃗ · B⃗</div>
-    <div class="q-en">Find A⃗ · B⃗ for A⃗ = 2î−3ĵ+7k̂ and B⃗ = 5î+ĵ+2k̂</div>
-    <button class="show-ans" onclick="toggleAns('ansV8')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV8">
-      A⃗ · B⃗ = AₓBₓ + AᵧBᵧ + A_zB_z<br>
-      = (2)(5) + (−3)(1) + (7)(2)<br>
-      = 10 − 3 + 14<br>
-      <strong>A⃗ · B⃗ = 21</strong>
-      <div class="ans-en">= (2)(5)+(−3)(1)+(7)(2) = 10−3+14 = 21</div>
-    </div>
-  </div>
-
-  <!-- Q9 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ٩ &nbsp;|&nbsp; V-009 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">ثلاث قوى: F₁=(20î−36ĵ+73k̂) N, F₂=(−17î+21ĵ−46k̂) N, F₃=(0î+0ĵ−12k̂) N. أوجد المحصلة ومقدارها.</div>
-    <div class="q-en">Find resultant and magnitude of three forces F₁, F₂, F₃.</div>
-    <button class="show-ans" onclick="toggleAns('ansV9')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV9">
-      Rₓ = 20 − 17 + 0 = <strong>3 N</strong><br>
-      Rᵧ = −36 + 21 + 0 = <strong>−15 N</strong><br>
-      R_z = 73 − 46 − 12 = <strong>15 N</strong><br>
-      R⃗ = 3î − 15ĵ + 15k̂<br>
-      |R⃗| = √(3² + 15² + 15²) = √(9+225+225) = √459 ≈ <strong>21 N</strong>
-      <div class="ans-en">R⃗ = 3î−15ĵ+15k̂, |R⃗| ≈ 21 N</div>
-    </div>
-  </div>
-
-  <!-- Q10 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٠ &nbsp;|&nbsp; V-010 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">إذا كان |A⃗| = 5 و |B⃗| = 4 والزاوية بينهما 60°، أوجد مقدار المحصلة R = A⃗ + B⃗.</div>
-    <div class="q-en">|A| = 5, |B| = 4, angle = 60°. Find |R| using triangle law.</div>
-    <button class="show-ans" onclick="toggleAns('ansV10')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV10">
-      R = √(A² + B² + 2AB cosθ)<br>
-      R = √(25 + 16 + 2×5×4×cos60°)<br>
-      R = √(25 + 16 + 40×0.5)<br>
-      R = √(25 + 16 + 20)<br>
-      R = √61 ≈ <strong>7.81</strong>
-      <div class="ans-en">R = √(A²+B²+2AB cosθ) = √61 ≈ 7.81</div>
-    </div>
-  </div>
-
-  <!-- Q11 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١١ &nbsp;|&nbsp; V-011 <span class="q-level level-med">متوسط · Medium</span></div>
-    <div class="q-text">أوجد المتجه الوحدي لـ A⃗ = 2î − 3ĵ + 7k̂</div>
-    <div class="q-en">Find the unit vector of A⃗ = 2î−3ĵ+7k̂</div>
-    <button class="show-ans" onclick="toggleAns('ansV11')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV11">
-      |A⃗| = √(4 + 9 + 49) = √62 ≈ 7.87<br>
-      Â = A⃗ / |A⃗| = (2î − 3ĵ + 7k̂) / √62<br>
-      <strong>Â = (2/√62)î − (3/√62)ĵ + (7/√62)k̂</strong><br>
-      ≈ 0.254î − 0.381ĵ + 0.889k̂
-      <div class="ans-en">|A| = √62, Â = (2î−3ĵ+7k̂)/√62</div>
-    </div>
-  </div>
-
-  <!-- ══ HARD ══ -->
-  <div class="ex-header" style="margin-top:30px;"><span class="badge" style="background:linear-gradient(135deg,var(--red),#dc2626);">LEVEL 3</span><h2>صعب — Hard</h2></div>
-
-  <!-- Q12 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٢ &nbsp;|&nbsp; V-012 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">أي صيغة لـ F (قوة الدوران الدائري) صحيحة بُعدياً؟ (v سرعة [L/T]، m كتلة [M]، R نصف قطر [L])</div>
-    <div class="q-en">Which formula for centripetal force F is dimensionally correct? [F] = MLT⁻²</div>
-    <div class="options">
-      <div class="opt" onclick="mcq(this,'a','V12')">أ) F = mvR</div>
-      <div class="opt" onclick="mcq(this,'b','V12')">ب) F = m(v/R)²</div>
-      <div class="opt" onclick="mcq(this,'c','V12')">ج) F = mv²/R ✓</div>
-      <div class="opt" onclick="mcq(this,'d','V12')">د) F = m²v/R</div>
-    </div>
-    <button class="show-ans" onclick="toggleAns('ansV12')">💡 اظهر تحقق الأبعاد</button>
-    <div class="answer-box" id="ansV12">
+  <div class="qcard">
+    <div class="qn">D-007 <span class="lvl l3">صعب</span></div>
+    <div class="qt">حوّل 1 Newton إلى dyne (نظام CGS).</div>
+    <div class="qe">Convert 1 Newton to dyne using dimensional analysis.</div>
+    <button class="show-btn" onclick="tog('D7s')">💡 الحل</button>
+    <div class="ans-box" id="D7s">
       [F] = MLT⁻²<br>
-      (ج) F = mv²/R → [M][LT⁻¹]²/[L] = M·L²T⁻²/L = <strong>MLT⁻² ✓</strong><br>
-      (أ) mvR → M·LT⁻¹·L = ML²T⁻¹ ✗<br>
-      (ب) m(v/R)² → M·(LT⁻¹/L)² = MT⁻² ✗<br>
-      <div class="ans-en">Only F=mv²/R gives [MLT⁻²]</div>
+      1 N = 1 kg·m·s⁻² في MKS<br>
+      في CGS: 1 kg=1000g, 1 m=100 cm, 1 s=1 s<br>
+      1 N = (1000 g)(100 cm)(1 s)⁻² = 1000×100 = <b>10⁵ dyne</b>
+      <div class="ae">1 N = 10⁵ dyne</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VECTORS ═══════════════ -->
+<div class="pg" id="p-vec">
+  <div class="sec-title"><h2>المتجهات</h2><p>Vectors — Tutorial 2</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">➡️ 3D Vector Lab</div>
+    <canvas id="cvVec" height="320"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="vecMode('add')">جمع المتجهات</button>
+      <button class="sc-btn" onclick="vecMode('dot')">الضرب النقطي</button>
+      <button class="sc-btn" onclick="vecMode('cross')">الضرب الاتجاهي</button>
     </div>
   </div>
 
-  <!-- Q13 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٣ &nbsp;|&nbsp; V-013 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">المتجهان: A⃗ = î + 2ĵ − k̂ و B⃗ = 3î − ĵ + 2k̂. أوجد زاوية الانفراج θ بينهما.</div>
-    <div class="q-en">Find the angle between A⃗ = î+2ĵ−k̂ and B⃗ = 3î−ĵ+2k̂.</div>
-    <button class="show-ans" onclick="toggleAns('ansV13')">💡 اظهر الحل الكامل</button>
-    <div class="answer-box" id="ansV13">
-      A⃗ · B⃗ = (1)(3) + (2)(−1) + (−1)(2) = 3 − 2 − 2 = <strong>−1</strong><br>
-      |A⃗| = √(1+4+1) = √6<br>
-      |B⃗| = √(9+1+4) = √14<br><br>
-      cos θ = (A⃗·B⃗) / (|A||B|) = −1 / (√6 × √14) = −1/√84<br>
-      cos θ = −1/9.165 ≈ −0.1091<br>
-      <strong>θ = cos⁻¹(−0.1091) ≈ 96.3°</strong>
-      <div class="ans-en">cosθ = −1/√84 → θ ≈ 96.3°</div>
+  <div class="card">
+    <h3>⚖️ سعري vs متجه</h3>
+    <p class="en">Scalar (magnitude only) vs Vector (magnitude + direction)</p>
+    <div class="tscroll"><table>
+      <tr><th>النوع</th><th>الخاصية</th><th>أمثلة</th></tr>
+      <tr><td>سعري</td><td>مقدار فقط</td><td>كتلة، طاقة، زمن، درجة حرارة، كثافة</td></tr>
+      <tr><td>متجه</td><td>مقدار + اتجاه</td><td>إزاحة، سرعة، تسارع، قوة، زخم</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>📐 العمليات على المتجهات</h3>
+    <p class="en">Vector operations — addition, dot product, cross product</p>
+    <p style="font-weight:700;color:var(--a2);margin:10px 0 4px;">① جمع المتجهات (Triangle / Parallelogram Law)</p>
+    <div class="formula">R = √(A²+B²+2AB cosθ) &nbsp;|&nbsp; tanβ = B sinθ/(A+B cosθ)</div>
+    <p style="font-weight:700;color:var(--a2);margin:10px 0 4px;">② الضرب النقطي — Dot Product (ناتجه عددي)</p>
+    <div class="formula">A⃗·B⃗ = |A||B|cosθ = AₓBₓ+AᵧBᵧ+A_zB_z</div>
+    <div class="note"><b>A⃗·B⃗=0 → متعامدان (θ=90°)</b> &nbsp;|&nbsp; î·î=1, î·ĵ=0</div>
+    <p style="font-weight:700;color:var(--a2);margin:10px 0 4px;">③ الضرب الاتجاهي — Cross Product (ناتجه متجه)</p>
+    <div class="formula">|A⃗×B⃗| = |A||B|sinθ &nbsp;|&nbsp; î×ĵ=k̂, ĵ×k̂=î, k̂×î=ĵ</div>
+    <div class="note"><b>|A⃗×B⃗|=0 → متوازيان (θ=0° أو 180°)</b></div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة</h3>
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">V1. سفينة تسير 200 km جنوباً ثم 400 km غرباً. أوجد الإزاحة الكلية والاتجاه.</p>
+    <input class="blank" placeholder="استخدم نظرية فيثاغورس...">
+    <button class="show-btn" onclick="tog('V1s')">💡 الحل</button>
+    <div class="ans-box" id="V1s">
+      R = √(200²+400²) = √(40000+160000) = √200000 ≈ <b>447 km</b><br>
+      θ = tan⁻¹(400/200) = tan⁻¹(2) ≈ <b>63.4° غرب الجنوب</b>
+      <div class="ae">R=√(200²+400²)≈447km at 63.4° west of south</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">V2. قارب سرعته في الماء 14 km/h، والتيار 6 km/h. ما نطاق سرعة القارب نسبةً للقاع؟</p>
+    <input class="blank" placeholder="الحد الأدنى والأقصى...">
+    <button class="show-btn" onclick="tog('V2s')">💡 الحل</button>
+    <div class="ans-box" id="V2s">
+      <b>الحد الأدنى:</b> عندما يتعاكس اتجاه القارب والتيار: 14-6 = <b>8 km/h</b><br>
+      <b>الحد الأقصى:</b> عندما يتوافقان: 14+6 = <b>20 km/h</b><br>
+      إذن السرعة بين <b>8 و 20 km/h</b>
+      <div class="ae">Speed range: 8 to 20 km/h</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">V3. حزام ناقل سرعته 4.00 m/s عند 40° فوق الأفق. أوجد المركبة الرأسية.</p>
+    <input class="blank" placeholder="استخدم المركبات...">
+    <button class="show-btn" onclick="tog('V3s')">💡 الحل</button>
+    <div class="ans-box" id="V3s">
+      vᵧ = v sinθ = 4.00 × sin40° = 4.00 × 0.643 = <b>2.57 m/s</b>
+      <div class="ae">vᵧ = 4.00 sin40° = 2.57 m/s</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">V4. قوتان كل منهما 20N، الزاوية بينهما 120°. أوجد المحصلة.</p>
+    <input class="blank" placeholder="استخدم قانون التوازي...">
+    <button class="show-btn" onclick="tog('V4s')">💡 الحل</button>
+    <div class="ans-box" id="V4s">
+      R = √(A²+B²+2AB cosθ) = √(400+400+2·20·20·cos120°)<br>
+      = √(800+800·(-0.5)) = √(800-400) = √400 = <b>20 N</b>
+      <div class="ae">R=√(20²+20²+2·20·20·cos120°)=20N</div>
     </div>
   </div>
 
-  <!-- Q14 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٤ &nbsp;|&nbsp; V-014 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">استخدام طريقة المحصلة الجرافيكية: أوجد محصلة إزاحتين: 2.0 m عند 40° و 4.0 m عند 127°.</div>
-    <div class="q-en">Find resultant of 2.0m@40° and 4.0m@127° using components.</div>
-    <button class="show-ans" onclick="toggleAns('ansV14')">💡 اظهر الحل بالمركبات</button>
-    <div class="answer-box" id="ansV14">
-      <strong>المتجه الأول (2.0 m @ 40°):</strong><br>
-      x₁ = 2.0 cos40° = 2.0 × 0.766 = 1.532 m<br>
-      y₁ = 2.0 sin40° = 2.0 × 0.643 = 1.286 m<br><br>
-      <strong>المتجه الثاني (4.0 m @ 127°):</strong><br>
-      x₂ = 4.0 cos127° = 4.0 × (−0.602) = −2.408 m<br>
-      y₂ = 4.0 sin127° = 4.0 × 0.799 = 3.196 m<br><br>
-      <strong>المجموع:</strong><br>
-      Rₓ = 1.532 − 2.408 = −0.876 m<br>
-      Rᵧ = 1.286 + 3.196 = 4.482 m<br>
-      |R| = √(0.876² + 4.482²) = √(0.767 + 20.09) = √20.86 ≈ <strong>4.57 m</strong><br>
-      θ = tan⁻¹(4.482 / 0.876) ≈ tan⁻¹(5.11) ≈ 101° (من الإيجابي x)
-      <div class="ans-en">R ≈ 4.57 m at ≈ 101°</div>
+  <!-- Vector Exercises -->
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>تمارين المتجهات — سهل</h3></div>
+
+  <div class="qcard">
+    <div class="qn">V-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">الحد الأدنى من المتجهات غير المتساوية التي تكون محصلتها صفراً هو:</div>
+    <div class="qe">Minimum unequal vectors with zero resultant?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','V001')">أ) 2</div>
+      <div class="opt" onclick="mcq(this,'b','V001')">ب) 3 ✓</div>
+      <div class="opt" onclick="mcq(this,'c','V001')">ج) 4</div>
+      <div class="opt" onclick="mcq(this,'d','V001')">د) 6</div>
     </div>
   </div>
 
-  <!-- Q15 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٥ &nbsp;|&nbsp; V-015 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">أثبت أن المتجهين A⃗ = 3î + 4ĵ − k̂ و B⃗ = −2î + 3ĵ + 6k̂ متعامدان. ثم أوجد |A⃗ × B⃗|.</div>
-    <div class="q-en">Prove A⃗ = 3î+4ĵ−k̂ and B⃗ = −2î+3ĵ+6k̂ are perpendicular. Find |A⃗×B⃗|.</div>
-    <button class="show-ans" onclick="toggleAns('ansV15')">💡 اظهر الحل الكامل</button>
-    <div class="answer-box" id="ansV15">
-      <strong>التحقق من التعامد (Dot Product):</strong><br>
-      A⃗·B⃗ = (3)(−2) + (4)(3) + (−1)(6) = −6 + 12 − 6 = <strong>0 ✓</strong><br>
-      (الضرب النقطي = صفر ∴ متعامدان)<br><br>
-      <strong>|A⃗×B⃗| = |A||B|sinθ</strong><br>
-      θ = 90° → sin90° = 1<br>
-      |A⃗| = √(9+16+1) = √26<br>
-      |B⃗| = √(4+9+36) = √49 = 7<br>
-      |A⃗×B⃗| = √26 × 7 × 1 = <strong>7√26 ≈ 35.7</strong>
-      <div class="ans-en">A·B=0 ✓ perpendicular | |A×B|=7√26≈35.7</div>
+  <div class="qcard">
+    <div class="qn">V-002 <span class="lvl l1">سهل</span></div>
+    <div class="qt">المحصلة تكون صغرى عندما تكون الزاوية بين المتجهين:</div>
+    <div class="qe">Resultant is minimum when angle between vectors is:</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','V002')">أ) 0°</div>
+      <div class="opt" onclick="mcq(this,'b','V002')">ب) 90°</div>
+      <div class="opt" onclick="mcq(this,'c','V002')">ج) 180° ✓</div>
+      <div class="opt" onclick="mcq(this,'d','V002')">د) 45°</div>
     </div>
   </div>
 
-  <!-- Q16 -->
-  <div class="ex-card">
-    <div class="q-num">سؤال ١٦ &nbsp;|&nbsp; V-016 <span class="q-level level-hard">صعب · Hard</span></div>
-    <div class="q-text">أوجد قيمة α بحيث يكون المتجهان A⃗ = 2î + αĵ + 3k̂ و B⃗ = î − 2ĵ + k̂ متعامدَين.</div>
-    <div class="q-en">Find α such that A⃗ = 2î+αĵ+3k̂ and B⃗ = î−2ĵ+k̂ are perpendicular.</div>
-    <button class="show-ans" onclick="toggleAns('ansV16')">💡 اظهر الحل</button>
-    <div class="answer-box" id="ansV16">
-      للتعامد: A⃗·B⃗ = 0<br>
-      (2)(1) + (α)(−2) + (3)(1) = 0<br>
-      2 − 2α + 3 = 0<br>
-      5 = 2α<br>
-      <strong>α = 5/2 = 2.5</strong>
-      <div class="ans-en">A·B=0 → 2−2α+3=0 → α = 2.5</div>
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+
+  <div class="qcard">
+    <div class="qn">V-003 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">A⃗=3î+4ĵ و B⃗=4î-3ĵ. أثبت أنهما متعامدان وأوجد مقدار كل منهما.</div>
+    <div class="qe">A⃗=3î+4ĵ, B⃗=4î-3ĵ. Prove perpendicular and find magnitudes.</div>
+    <button class="show-btn" onclick="tog('V003s')">💡 الحل</button>
+    <div class="ans-box" id="V003s">
+      A⃗·B⃗ = (3)(4)+(4)(-3) = 12-12 = <b>0 ✓ متعامدان</b><br>
+      |A⃗| = √(9+16) = √25 = <b>5</b><br>
+      |B⃗| = √(16+9) = √25 = <b>5</b>
+      <div class="ae">A·B=0 → perpendicular | |A|=|B|=5</div>
     </div>
   </div>
 
-  <!-- Interactive Calculator -->
-  <div class="card" style="margin-top:30px;">
-    <h3>🧮 حاسبة المتجهات التفاعلية — Interactive Vector Calculator</h3>
-    <p class="en-h">Enter two 2D vectors and see their sum, difference, dot product, and angle</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-      <div>
-        <p style="color:var(--accent2);font-size:0.85rem;margin-bottom:8px;">A⃗ = Aₓî + Aᵧĵ</p>
-        <div style="display:flex;gap:8px;">
-          <input type="number" id="ax" placeholder="Aₓ" class="free-input" style="margin:0;" value="3">
-          <input type="number" id="ay" placeholder="Aᵧ" class="free-input" style="margin:0;" value="4">
-        </div>
-      </div>
-      <div>
-        <p style="color:var(--accent3);font-size:0.85rem;margin-bottom:8px;">B⃗ = Bₓî + Bᵧĵ</p>
-        <div style="display:flex;gap:8px;">
-          <input type="number" id="bx" placeholder="Bₓ" class="free-input" style="margin:0;" value="1">
-          <input type="number" id="by" placeholder="Bᵧ" class="free-input" style="margin:0;" value="-2">
-        </div>
-      </div>
+  <div class="qcard">
+    <div class="qn">V-004 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">أوجد المركبة الأفقية والرأسية لمتجه مقداره 50N عند زاوية 37° من الأفق.</div>
+    <div class="qe">Find x and y components of 50N at 37° from horizontal.</div>
+    <button class="show-btn" onclick="tog('V004s')">💡 الحل</button>
+    <div class="ans-box" id="V004s">
+      Fₓ = 50 cos37° = 50×0.8 = <b>40 N</b><br>
+      Fᵧ = 50 sin37° = 50×0.6 = <b>30 N</b>
+      <div class="ae">Fₓ=40N, Fᵧ=30N (using sin37°=0.6, cos37°=0.8)</div>
     </div>
-    <button class="check-btn" onclick="calcVectors()" style="margin-top:14px;">احسب — Calculate</button>
-    <div id="vec-result" style="display:none;margin-top:14px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--dim);line-height:2.2;direction:ltr;"></div>
+  </div>
 
-    <!-- Canvas -->
-    <div class="diagram-wrap" style="margin-top:16px;">
-      <div class="d-title">تمثيل بياني — Vector Diagram</div>
-      <canvas id="vecCanvas" width="400" height="300"></canvas>
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+
+  <div class="qcard">
+    <div class="qn">V-005 <span class="lvl l3">صعب</span></div>
+    <div class="qt">ثلاثة إزاحات: 3, 4, 12, 20 km. هل يمكنها إرجاع السيارة لنقطة البداية؟ ولماذا؟</div>
+    <div class="qe">Displacements 3,4,12,20 km — can they return a car to start?</div>
+    <button class="show-btn" onclick="tog('V005s')">💡 الحل</button>
+    <div class="ans-box" id="V005s">
+      للعودة: يجب أن تكون المحصلة = صفر.<br>
+      الشرط: أكبر متجه يجب ≤ مجموع الباقية.<br>
+      هنا: 20 > 3+4+12 = 19 → <b>لا يمكن ✗</b><br>
+      لكن 5,10,15,20: 20=5+15 ✓ — ممكن إذا كانت الاتجاهات مناسبة.
+      <div class="ae">20 > 3+4+12=19 → impossible to return</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CIRCULAR MOTION ═══════════════ -->
+<div class="pg" id="p-circ">
+  <div class="sec-title"><h2>الحركة الدائرية والجاذبية</h2><p>Circular Motion & Gravitation — Tutorial 3 & 5</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">🔄 3D Circular Motion</div>
+    <canvas id="cvCirc" height="320"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="circMode('slow')">بطيء</button>
+      <button class="sc-btn" onclick="circMode('fast')">سريع</button>
+      <button class="sc-btn" onclick="circMode('vert')">دائرة رأسية</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔄 قوانين الحركة الدائرية</h3>
+    <p class="en">Laws of circular motion — centripetal force & acceleration</p>
+    <div class="formula">aᶜ = v²/r = ω²r &nbsp;|&nbsp; Fᶜ = mv²/r = mω²r</div>
+    <div class="formula">ω = 2πf = 2π/T &nbsp;|&nbsp; v = ωr</div>
+    <div class="note"><b>القوة المركزية (Centripetal):</b> دائماً نحو المركز، عمودية على السرعة.<br>
+    <b>القوة الطاردة المركزية (Centrifugal):</b> قوة وهمية (خيالية) — تظهر فقط في الإطار المتسارع.</div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة — Workbook Problems</h3>
+
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">C1. كرة في دائرة نصف قطرها 60 cm بمعدل 1 دورة كل 2s. أوجد التسارع المركزي.</p>
+    <input class="blank" placeholder="اكتب الحل هنا...">
+    <button class="show-btn" onclick="tog('C1s')">💡 الحل</button>
+    <div class="ans-box" id="C1s">
+      T=2s, r=0.60m<br>
+      ω = 2π/T = 2π/2 = π rad/s<br>
+      aᶜ = ω²r = π²×0.60 ≈ 9.87×0.60 ≈ <b>5.92 m/s²</b>
+      <div class="ae">aᶜ=ω²r=π²×0.6≈5.92 m/s²</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">C2. حجر على خيط 0.5m يدور في دائرة رأسية بسرعة 5 m/s. الشد في الخيط أسفل الدائرة؟</p>
+    <input class="blank" placeholder="عند الأسفل: T - mg = mv²/r ...">
+    <button class="show-btn" onclick="tog('C2s')">💡 الحل</button>
+    <div class="ans-box" id="C2s">
+      عند الأسفل (الجاذبية والشد في اتجاهين متعاكسين):<br>
+      T - mg = mv²/r<br>
+      T = m(g + v²/r) = 1×(9.8 + 25/0.5) = 1×(9.8+50) = <b>59.8 N</b><br><br>
+      عند الأعلى: T + mg = mv²/r<br>
+      T = m(v²/r - g) = 1×(50-9.8) = <b>40.2 N</b>
+      <div class="ae">Bottom: T=m(g+v²/r)=59.8N | Top: T=m(v²/r-g)=40.2N</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">C3. ماهي قوة الجاذبية بين كرتين رصاص كل منهما 1000 kg على بُعد 3m؟</p>
+    <input class="blank" placeholder="استخدم: F = Gm₁m₂/r² ...">
+    <button class="show-btn" onclick="tog('C3s')">💡 الحل</button>
+    <div class="ans-box" id="C3s">
+      F = Gm₁m₂/r² = (6.67×10⁻¹¹)(10³)(10³)/(3)²<br>
+      = 6.67×10⁻¹¹×10⁶/9 = <b>7.4×10⁻⁵ N</b>
+      <div class="ae">F=6.67×10⁻¹¹×10⁶/9=7.4×10⁻⁵N (very small!)</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>سهل</h3></div>
+  <div class="qcard">
+    <div class="qn">C-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">كرة 500g تدور في دائرة أفقية نصف قطرها 40cm بسرعة 4m/s. تسارعها المركزي؟</div>
+    <div class="qe">500g ball, r=40cm, v=4m/s. Centripetal acceleration?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','C001')">أ) 10 m/s²</div>
+      <div class="opt" onclick="mcq(this,'b','C001')">ب) 20 m/s²</div>
+      <div class="opt" onclick="mcq(this,'c','C001')">ج) 40 m/s² ✓</div>
+      <div class="opt" onclick="mcq(this,'d','C001')">د) 80 m/s²</div>
+    </div>
+    <button class="show-btn" onclick="tog('C001s')">💡</button>
+    <div class="ans-box" id="C001s">aᶜ = v²/r = 16/0.4 = <b>40 m/s²</b><div class="ae">aᶜ=v²/r=16/0.4=40m/s²</div></div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+  <div class="qcard">
+    <div class="qn">C-002 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">سيارة 1200kg تسير بسرعة 6m/s في منعطف نصف قطره 30m. قوة الشد المركزية؟</div>
+    <div class="qe">1200kg car, v=6m/s, r=30m. Find centripetal force.</div>
+    <button class="show-btn" onclick="tog('C002s')">💡 الحل</button>
+    <div class="ans-box" id="C002s">
+      Fᶜ = mv²/r = (1200×36)/30 = 43200/30 = <b>1440 N</b>
+      <div class="ae">Fc=mv²/r=1200×36/30=1440N</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+  <div class="qcard">
+    <div class="qn">C-003 <span class="lvl l3">صعب</span></div>
+    <div class="qt">قمر صناعي يدور على ارتفاع حيث g=6.2 m/s² ونصف قطر مداره 8000 km. أوجد سرعته.</div>
+    <div class="qe">Satellite at r=8000km where g=6.2m/s². Find orbital velocity.</div>
+    <button class="show-btn" onclick="tog('C003s')">💡 الحل</button>
+    <div class="ans-box" id="C003s">
+      عند الدوران: الجاذبية = القوة المركزية<br>
+      mg = mv²/r → v = √(gr) = √(6.2×8×10⁶)<br>
+      = √(49.6×10⁶) = 7042 m/s ≈ <b>7.0 km/s</b>
+      <div class="ae">v=√(gr)=√(6.2×8×10⁶)≈7.0km/s</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MOMENTUM ═══════════════ -->
+<div class="pg" id="p-mom">
+  <div class="sec-title"><h2>الزخم والتصادمات</h2><p>Momentum & Collisions — Tutorial 4</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">💥 3D Collision Simulation</div>
+    <canvas id="cvMom" height="280"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="momMode('elastic')">مرن</button>
+      <button class="sc-btn" onclick="momMode('inelastic')">غير مرن</button>
+      <button class="sc-btn" onclick="momMode('rocket')">صاروخ</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💥 قوانين الزخم</h3>
+    <p class="en">Momentum, impulse and conservation laws</p>
+    <div class="formula">p⃗ = mv⃗ &nbsp;|&nbsp; J = F·Δt = Δp</div>
+    <div class="formula">m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂' (حفظ الزخم)</div>
+    <div class="note"><b>التصادم المرن:</b> يُحفظ الزخم والطاقة الحركية.<br>
+    <b>التصادم غير المرن:</b> يُحفظ الزخم فقط، تُفقد بعض الطاقة.</div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة</h3>
+
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">M1. زخم صبي 50kg يجري بسرعة 6m/s.</p>
+    <input class="blank" placeholder="p = mv ...">
+    <button class="show-btn" onclick="tog('M1s')">💡 الحل</button>
+    <div class="ans-box" id="M1s">p = mv = 50×6 = <b>300 kg·m/s</b><div class="ae">p=mv=50×6=300 kg·m/s</div></div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">M2. كرة جولف 46g تُضرب فتنطلق بسرعة 70m/s في 0.5ms. القوة المتوسطة؟</p>
+    <input class="blank" placeholder="F = Δp/Δt = m·Δv/Δt ...">
+    <button class="show-btn" onclick="tog('M2s')">💡 الحل</button>
+    <div class="ans-box" id="M2s">
+      F = mΔv/Δt = (0.046×70)/(0.5×10⁻³)<br>
+      = 3.22/0.0005 = <b>6440 N</b>
+      <div class="ae">F=0.046×70/0.0005=6440N</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">M3. كرة ثلج 0.5kg تنطلق بسرعة 20m/s وتلتصق بشخص 70kg. السرعة النهائية؟</p>
+    <input class="blank" placeholder="حفظ الزخم: msv1 = (mm+ms)v2 ...">
+    <button class="show-btn" onclick="tog('M3s')">💡 الحل</button>
+    <div class="ans-box" id="M3s">
+      msv₁ = (mm+ms)v₂<br>
+      v₂ = msv₁/(mm+ms) = (0.5×20)/(70+0.5) = 10/70.5 ≈ <b>0.14 m/s</b>
+      <div class="ae">v₂=0.5×20/70.5≈0.14m/s</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">M4. متزلجة 40kg بسرعة 4m/s تلحق بأخرى 60kg بسرعة 2m/s (نفس الاتجاه) وتصطدمان. السرعة النهائية وفقدان الطاقة؟</p>
+    <input class="blank" placeholder="استخدم حفظ الزخم ثم احسب ΔKE ...">
+    <button class="show-btn" onclick="tog('M4s')">💡 الحل</button>
+    <div class="ans-box" id="M4s">
+      m₁v₁+m₂v₂=(m₁+m₂)v<br>
+      (40×4)+(60×2)=(40+60)v → 160+120=100v → v=<b>2.8 m/s</b><br><br>
+      KE_أولي = ½(40)(4²)+½(60)(2²) = 320+120 = 440 J<br>
+      KE_نهائي = ½(100)(2.8²) = 392 J<br>
+      ΔKE = <b>48 J مفقودة</b>
+      <div class="ae">v=2.8m/s | ΔKE=48J lost</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>سهل</h3></div>
+  <div class="qcard">
+    <div class="qn">M-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">التصادم المرن يحفظ:</div>
+    <div class="qe">An elastic collision conserves:</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','M001')">أ) الزخم فقط</div>
+      <div class="opt" onclick="mcq(this,'b','M001')">ب) الطاقة الحركية فقط</div>
+      <div class="opt" onclick="mcq(this,'c','M001')">ج) كليهما ✓</div>
+      <div class="opt" onclick="mcq(this,'d','M001')">د) لا شيء</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+  <div class="qcard">
+    <div class="qn">M-002 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">مضرب تنس يؤثر بقوة 250N على كرة تنس 60g ساكنة لمدة 5ms. سرعة الكرة بعد الضربة؟</div>
+    <div class="qe">Racket exerts 250N on 60g ball for 5ms. Find final velocity.</div>
+    <button class="show-btn" onclick="tog('M002s')">💡 الحل</button>
+    <div class="ans-box" id="M002s">
+      J = FΔt = 250×0.005 = 1.25 N·s<br>
+      J = mΔv → Δv = J/m = 1.25/0.06 ≈ <b>20.8 m/s</b><br>
+      KE = ½mv² = ½×0.06×20.8² ≈ <b>13 J</b>
+      <div class="ae">v=FΔt/m=250×0.005/0.06≈20.8m/s | KE≈13J</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+  <div class="qcard">
+    <div class="qn">M-003 <span class="lvl l3">صعب</span></div>
+    <div class="qt">صاروخ كتلته 5000kg (3500kg وقود). الوقود يُطرح بسرعة 3km/s بمعدل 30kg/s. أوجد: (أ) قوة الدفع (ب) التسارع الابتدائي (ج) التسارع النهائي.</div>
+    <div class="qe">Rocket: total 5000kg, fuel 3500kg, exhaust v=3km/s, rate 30kg/s. Find: thrust, initial & final accelerations.</div>
+    <button class="show-btn" onclick="tog('M003s')">💡 الحل الكامل</button>
+    <div class="ans-box" id="M003s">
+      (أ) F = v·(Δm/Δt) = 3000×30 = <b>90,000 N = 90 kN</b><br><br>
+      (ب) a₀ = (F-m₀g)/m₀ = (90000-5000×9.8)/5000<br>
+      = (90000-49000)/5000 = 41000/5000 = <b>8.2 m/s²</b><br><br>
+      (ج) الكتلة النهائية = 5000-3500 = 1500kg<br>
+      a_f = (F-mg)/m = (90000-1500×9.8)/1500<br>
+      = (90000-14700)/1500 = 75300/1500 = <b>50.2 m/s²</b>
+      <div class="ae">Thrust=90kN | a₀=8.2m/s² | a_f=50.2m/s²</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ WORK & ENERGY ═══════════════ -->
+<div class="pg" id="p-work">
+  <div class="sec-title"><h2>الشغل والقدرة والطاقة</h2><p>Work, Power & Energy — Tutorial 7</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">⚡ 3D Energy Visualization</div>
+    <canvas id="cvWork" height="280"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="workMode('pendulum')">بندول</button>
+      <button class="sc-btn" onclick="workMode('spring')">زنبرك</button>
+      <button class="sc-btn" onclick="workMode('incline')">منحدر</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>⚡ قوانين الشغل والطاقة</h3>
+    <p class="en">Work, power and energy laws</p>
+    <div class="formula">W = F·d·cosθ &nbsp;|&nbsp; P = W/t = F·v</div>
+    <div class="formula">KE = ½mv² &nbsp;|&nbsp; PE = mgh &nbsp;|&nbsp; PE_spring = ½kx²</div>
+    <div class="formula">E_total = KE + PE = constant (حفظ الطاقة)</div>
+    <div class="note"><b>مبدأ حفظ الطاقة:</b> الطاقة لا تُفقد ولا تُخلق من العدم — تتحول من صورة لأخرى.</div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة</h3>
+
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">W1. شدّ حجر 10m أفقياً بحبل يميل 30° عن الأرض بقوة 50N. أوجد الشغل.</p>
+    <input class="blank" placeholder="W = Fd cosθ ...">
+    <button class="show-btn" onclick="tog('W1s')">💡 الحل</button>
+    <div class="ans-box" id="W1s">
+      W = Fd cosθ = 50×10×cos30° = 500×0.866 ≈ <b>433 J</b>
+      <div class="ae">W=50×10×cos30°=433J</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">W2. زنبرك ممدد 20mm طاقته الوضعية 10J. ما طاقته عندما يُمدد 30mm؟</p>
+    <input class="blank" placeholder="PE = ½kx² → أوجد k أولاً ...">
+    <button class="show-btn" onclick="tog('W2s')">💡 الحل</button>
+    <div class="ans-box" id="W2s">
+      PE = ½kx² → 10 = ½k(0.02)² → k = 10/(0.0002) = 50000 N/m<br>
+      PE_new = ½×50000×(0.03)² = ½×50000×0.0009 = <b>22.5 J</b>
+      <div class="ae">PE∝x² → PE_new=10×(30/20)²=10×2.25=22.5J</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">W3. شخص وزنه 65kg يرفع 45kg ارتفاع 10m في 12s. الشغل الكلي والقدرة؟</p>
+    <input class="blank" placeholder="W=mgh ثم P=W/t ...">
+    <button class="show-btn" onclick="tog('W3s')">💡 الحل</button>
+    <div class="ans-box" id="W3s">
+      الكتلة الكلية = 65+45 = 110 kg<br>
+      W = mgh = 110×9.81×10 = <b>10791 J ≈ 10.8 kJ</b><br>
+      P = W/t = 10791/12 ≈ <b>899 W ≈ 0.9 kW</b>
+      <div class="ae">W=10791J | P=899W</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>سهل</h3></div>
+  <div class="qcard">
+    <div class="qn">W-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">شخص يمشي على طريق أفقي بحمل على رأسه. الشغل المبذول = ؟</div>
+    <div class="qe">Person walks horizontally with load on head. Work done?</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','W001')">أ) mgh</div>
+      <div class="opt" onclick="mcq(this,'b','W001')">ب) mgd</div>
+      <div class="opt" onclick="mcq(this,'c','W001')">ج) صفر (Zero) ✓</div>
+      <div class="opt" onclick="mcq(this,'d','W001')">د) -mgh</div>
+    </div>
+    <button class="show-btn" onclick="tog('W001s')">💡</button>
+    <div class="ans-box" id="W001s">
+      القوة رأسية (حمل)، الإزاحة أفقية → θ=90° → W=Fd cos90°=<b>0</b>
+      <div class="ae">Force⊥displacement → W=0</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+  <div class="qcard">
+    <div class="qn">W-002 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">جسمان X و Y لهما طاقة حركية متساوية وكتلتاهما m و 4m على التوالي. نسبة زخميهما؟</div>
+    <div class="qe">Bodies X and Y have equal KE, masses m and 4m. Ratio of momenta?</div>
+    <button class="show-btn" onclick="tog('W002s')">💡 الحل</button>
+    <div class="ans-box" id="W002s">
+      KE = p²/2m → p = √(2m·KE)<br>
+      pₓ/pᵧ = √(m·KE)/√(4m·KE) = √(1/4) = <b>1:2</b>
+      <div class="ae">p=√(2mKE) → pₓ:pᵧ=√m:√(4m)=1:2</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+  <div class="qcard">
+    <div class="qn">W-003 <span class="lvl l3">صعب</span></div>
+    <div class="qt">كيف يجب أن تتغير القوة مع السرعة لتكون القدرة ثابتة؟ P=F·v=const</div>
+    <div class="qe">How must force vary with velocity to maintain constant power?</div>
+    <button class="show-btn" onclick="tog('W003s')">💡 الحل</button>
+    <div class="ans-box" id="W003s">
+      P = F·v = ثابت<br>
+      F = P/v<br>
+      <b>يجب أن تكون القوة معكوسة التناسب مع السرعة (F ∝ 1/v)</b>
+      <div class="ae">P=Fv=const → F=P/v → F∝1/v (inversely proportional)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ WAVES ═══════════════ -->
+<div class="pg" id="p-wave">
+  <div class="sec-title"><h2>الموجات وتطبيقاتها</h2><p>Wave Motion & Applications — Tutorial 9</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">〰️ 3D Wave Simulation</div>
+    <canvas id="cvWave" height="300"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="waveMode('trans')">عرضية</button>
+      <button class="sc-btn" onclick="waveMode('long')">طولية</button>
+      <button class="sc-btn" onclick="waveMode('standing')">واقفة</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>〰️ قوانين الموجات</h3>
+    <p class="en">Wave motion laws — frequency, wavelength, velocity</p>
+    <div class="formula">v = fλ &nbsp;|&nbsp; T = 1/f &nbsp;|&nbsp; ω = 2πf</div>
+    <div class="formula">y = A sin(kx - ωt) &nbsp;|&nbsp; k = 2π/λ</div>
+    <div class="tscroll"><table>
+      <tr><th>النوع</th><th>الخاصية</th><th>مثال</th></tr>
+      <tr><td>عرضية</td><td>الاهتزاز ⊥ الانتشار</td><td>الضوء، موجات الماء</td></tr>
+      <tr><td>طولية</td><td>الاهتزاز ∥ الانتشار</td><td>الصوت، الموجات الأرضية P</td></tr>
+    </table></div>
+    <div class="note"><b>الصدى (Echo):</b> الحد الأدنى لمسافة العائق لسماع الصدى = 16.6m عند سرعة الصوت 332m/s والحد الزمني 0.1s.</div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة</h3>
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">Wv1. إذاعة تبث بتردد 15MHz وسرعة الموجة 3×10⁸m/s. أوجد الطول الموجي.</p>
+    <input class="blank" placeholder="v = fλ → λ = v/f ...">
+    <button class="show-btn" onclick="tog('Wv1s')">💡 الحل</button>
+    <div class="ans-box" id="Wv1s">
+      λ = v/f = (3×10⁸)/(15×10⁶) = <b>20 m</b>
+      <div class="ae">λ=v/f=3×10⁸/15×10⁶=20m</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">Wv2. شوكة رنانة تردد 512Hz تُحدث 24 اهتزازاً في الهواء. سرعة الصوت 340m/s. كم تقطع الموجة؟</p>
+    <input class="blank" placeholder="احسب زمن 24 اهتزاز أولاً ...">
+    <button class="show-btn" onclick="tog('Wv2s')">💡 الحل</button>
+    <div class="ans-box" id="Wv2s">
+      زمن 24 اهتزازة = 24/f = 24/512 = 0.0469 s<br>
+      المسافة = v×t = 340×0.0469 ≈ <b>15.9 m</b>
+      <div class="ae">t=24/512s, d=340×t≈15.9m</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">Wv3. رجل يسمع صدا بعد 1s. سرعة الصوت 330m/s. كم بُعد الصخرة؟</p>
+    <input class="blank" placeholder="المسافة الكلية = v×t → بعد الصخرة = ؟ ...">
+    <button class="show-btn" onclick="tog('Wv3s')">💡 الحل</button>
+    <div class="ans-box" id="Wv3s">
+      الصوت يقطع المسافة ذهاباً وإياباً في 1s<br>
+      المسافة الكلية = 330×1 = 330m<br>
+      بعد الصخرة = 330/2 = <b>165 m</b>
+      <div class="ae">d=v×t/2=330×1/2=165m</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>سهل</h3></div>
+  <div class="qcard">
+    <div class="qn">Wv-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">الصوت لا يمكن أن يكون:</div>
+    <div class="qe">Sound waves cannot be:</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','Wv001')">أ) منعكساً</div>
+      <div class="opt" onclick="mcq(this,'b','Wv001')">ب) مستقطباً ✓</div>
+      <div class="opt" onclick="mcq(this,'c','Wv001')">ج) منكسراً</div>
+      <div class="opt" onclick="mcq(this,'d','Wv001')">د) منحرفاً</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+  <div class="qcard">
+    <div class="qn">Wv-002 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">ماسح بالموجات فوق الصوتية يعمل بتردد 4.1MHz وسرعة 1500m/s في النسيج. الطول الموجي؟</div>
+    <div class="qe">Ultrasonic scanner: f=4.1MHz, v=1500m/s in tissue. Find wavelength.</div>
+    <button class="show-btn" onclick="tog('Wv002s')">💡 الحل</button>
+    <div class="ans-box" id="Wv002s">
+      λ = v/f = 1500/(4.1×10⁶) = <b>3.66×10⁻⁴ m ≈ 0.366 mm</b>
+      <div class="ae">λ=1500/4.1×10⁶≈3.66×10⁻⁴m</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+  <div class="qcard">
+    <div class="qn">Wv-003 <span class="lvl l3">صعب</span></div>
+    <div class="qt">ما الفرق بين الموجة المعلقة (Standing) والموجة المتحركة (Travelling)؟ وما الشرط لتكوّن الموجة المعلقة؟</div>
+    <div class="qe">Difference between standing and travelling waves? Condition for standing waves?</div>
+    <button class="show-btn" onclick="tog('Wv003s')">💡 الحل</button>
+    <div class="ans-box" id="Wv003s">
+      <b>متحركة:</b> تنقل الطاقة خلال الوسط | <b>معلقة:</b> لا تنقل طاقة صافية<br>
+      <b>الموجة المعلقة</b> تتكون بتداخل موجتين متساويتين في التردد والسعة تنتشران بعكس بعضهما.<br>
+      <b>الشرط:</b> طول الوتر = n×(λ/2) حيث n = 1,2,3,...<br>
+      النقاط الثابتة: العقد (Nodes) | النقاط ذات أقصى اهتزاز: البطون (Antinodes)
+      <div class="ae">Standing wave condition: L=nλ/2 | formed by superposition of two identical opposite waves</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ HEAT ═══════════════ -->
+<div class="pg" id="p-heat">
+  <div class="sec-title"><h2>الحرارة ونقل الحرارة</h2><p>Heat, Temperature & Heat Transfer — Tutorials 10 & 11</p><div class="line"></div></div>
+
+  <div class="scene-box">
+    <div class="scene-label">🌡️ 3D Heat Transfer</div>
+    <canvas id="cvHeat" height="280"></canvas>
+    <div class="scene-controls">
+      <button class="sc-btn on" onclick="heatMode('cond')">توصيل</button>
+      <button class="sc-btn" onclick="heatMode('conv')">حمل</button>
+      <button class="sc-btn" onclick="heatMode('rad')">إشعاع</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🌡️ قوانين الحرارة</h3>
+    <p class="en">Heat and temperature laws</p>
+    <div class="formula">Q = mcΔT &nbsp;|&nbsp; T_C = 5/9(T_F-32) &nbsp;|&nbsp; T_K = T_C+273.15</div>
+    <div class="formula">Q/t = kAΔT/d (توصيل) &nbsp;|&nbsp; R = eσT⁴ (إشعاع)</div>
+    <div class="tscroll"><table>
+      <tr><th>الطريقة</th><th>الآلية</th><th>مثال</th></tr>
+      <tr><td>توصيل</td><td>نقل الطاقة خلال المادة</td><td>ملعقة معدنية في ماء ساخن</td></tr>
+      <tr><td>حمل</td><td>حركة السائل أو الغاز</td><td>مكيف الهواء، تيارات الهواء</td></tr>
+      <tr><td>إشعاع</td><td>موجات كهرومغناطيسية</td><td>حرارة الشمس، مدفأة كهربائية</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>📖 مسائل الكراسة</h3>
+
+    <p style="color:var(--a3);font-weight:700;margin:10px 0 4px;">H1. 80°F إلى درجة مئوية؟</p>
+    <input class="blank" placeholder="T_C = 5/9(T_F - 32) ...">
+    <button class="show-btn" onclick="tog('H1s')">💡 الحل</button>
+    <div class="ans-box" id="H1s">T_C = 5/9×(80-32) = 5/9×48 = <b>26.7°C</b><div class="ae">T_C=5/9×(80-32)=26.7°C</div></div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">H2. كم حرارة لازمة لرفع درجة حرارة 3kg ماء من 20°C إلى 80°C؟</p>
+    <input class="blank" placeholder="Q = mcΔT ...">
+    <button class="show-btn" onclick="tog('H2s')">💡 الحل</button>
+    <div class="ans-box" id="H2s">
+      Q = mcΔT = 3×4185×(80-20) = 3×4185×60 = <b>753,300 J ≈ 753 kJ</b>
+      <div class="ae">Q=mcΔT=3×4185×60=753kJ</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">H3. غلاية 1.2kW تسخن 0.8kg ماء من 20°C إلى 100°C. الوقت اللازم؟</p>
+    <input class="blank" placeholder="Q = mcΔT ثم t = Q/P ...">
+    <button class="show-btn" onclick="tog('H3s')">💡 الحل</button>
+    <div class="ans-box" id="H3s">
+      Q = 0.8×4185×80 = 267,840 J ≈ 268 kJ<br>
+      t = Q/P = 268,000/1200 ≈ <b>223 s ≈ 3.7 دقيقة</b>
+      <div class="ae">t=Q/P=268kJ/1.2kW≈223s</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">H4. 5kg ماء عند 40°C على قطعة جليد كبيرة عند 0°C. كم كيلوغراماً من الجليد يذوب؟</p>
+    <input class="blank" placeholder="حرارة فقدها الماء = حرارة اكتسبها الجليد ...">
+    <button class="show-btn" onclick="tog('H4s')">💡 الحل</button>
+    <div class="ans-box" id="H4s">
+      m_w × c_w × ΔT = m_ice × L_f<br>
+      5×4185×40 = m_ice×335000<br>
+      837000 = m_ice×335000<br>
+      m_ice = 837/335 ≈ <b>2.5 kg</b>
+      <div class="ae">m_ice=m_w×c_w×ΔT/L_f=5×4185×40/335000=2.5kg</div>
+    </div>
+
+    <p style="color:var(--a3);font-weight:700;margin:14px 0 4px;">H5. الشمس تشع 6.5×10⁷ W/m². أوجد درجة حرارة سطحها (جسم أسود).</p>
+    <input class="blank" placeholder="R = σT⁴ → T = (R/σ)^(1/4) ...">
+    <button class="show-btn" onclick="tog('H5s')">💡 الحل</button>
+    <div class="ans-box" id="H5s">
+      R = σT⁴ → T = ⁴√(R/σ)<br>
+      T = ⁴√(6.5×10⁷ / 5.67×10⁻⁸)<br>
+      T = ⁴√(1.146×10¹⁵) = ⁴√(1.146×10¹⁵)<br>
+      T ≈ <b>5800 K</b>
+      <div class="ae">T=(R/σ)^(1/4)=(6.5×10⁷/5.67×10⁻⁸)^0.25≈5800K</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l1">LEVEL 1</span><h3>سهل</h3></div>
+  <div class="qcard">
+    <div class="qn">H-001 <span class="lvl l1">سهل</span></div>
+    <div class="qt">مريض درجة حرارته 40°C. ما يعادلها بالفهرنهايت؟</div>
+    <div class="qe">Patient temperature 40°C. Convert to Fahrenheit.</div>
+    <div class="opts">
+      <div class="opt" onclick="mcq(this,'a','H001')">أ) 96°F</div>
+      <div class="opt" onclick="mcq(this,'b','H001')">ب) 100°F</div>
+      <div class="opt" onclick="mcq(this,'c','H001')">ج) 104°F ✓</div>
+      <div class="opt" onclick="mcq(this,'d','H001')">د) 108°F</div>
+    </div>
+    <button class="show-btn" onclick="tog('H001s')">💡</button>
+    <div class="ans-box" id="H001s">T_F = 9/5×40+32 = 72+32 = <b>104°F</b><div class="ae">T_F=9/5×T_C+32=104°F</div></div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l2">LEVEL 2</span><h3>متوسط</h3></div>
+  <div class="qcard">
+    <div class="qn">H-002 <span class="lvl l2">متوسط</span></div>
+    <div class="qt">حائط خرسانة 6×3.5m و 25cm سُمكاً. الموصلية k=0.80 W/m·°C. درجات 5°C خارج و 20°C داخل. معدل فقدان الحرارة؟</div>
+    <div class="qe">Concrete wall: A=6×3.5m, d=25cm, k=0.80, ΔT=15°C. Heat flow rate?</div>
+    <button class="show-btn" onclick="tog('H002s')">💡 الحل</button>
+    <div class="ans-box" id="H002s">
+      Q/t = kAΔT/d = 0.80×(6×3.5)×15/0.25<br>
+      = 0.80×21×15/0.25 = 252/0.25 = <b>1008 W ≈ 1.0 kW</b>
+      <div class="ae">Q/t=kAΔT/d=0.8×21×15/0.25≈1008W</div>
+    </div>
+  </div>
+
+  <div class="ex-hdr"><span class="lvl l3">LEVEL 3</span><h3>صعب</h3></div>
+  <div class="qcard">
+    <div class="qn">H-003 <span class="lvl l3">صعب</span></div>
+    <div class="qt">الحد الأدنى من الجليد عند -10°C لإبراد 500g ماء من 20°C إلى 0°C. (c_ice=2.09 kJ/kg·°C، L_f=335 kJ/kg)</div>
+    <div class="qe">Minimum ice at -10°C to cool 500g water from 20°C to 0°C.</div>
+    <button class="show-btn" onclick="tog('H003s')">💡 الحل الكامل</button>
+    <div class="ans-box" id="H003s">
+      حرارة الماء المفقودة = m_w×c_w×ΔT_w = 0.5×4.185×20 = 41.85 kJ<br><br>
+      حرارة الجليد المكتسبة = م_ice×c_ice×10 + م_ice×L_f<br>
+      = م_ice×(2.09×10 + 335) = م_ice×355.9<br><br>
+      41.85 = م_ice×355.9<br>
+      م_ice = 41.85/355.9 ≈ <b>0.12 kg = 120g</b>
+      <div class="ae">m_ice=m_w×c_w×ΔT/(c_ice×ΔT_ice+L_f)=41.85/355.9≈0.12kg</div>
     </div>
   </div>
 </div>
 
 <footer>
-  <p>فيزياء ١ · University of Science and Technology · Faculty of Engineering</p>
-  <p style="margin-top:6px;">Dr. Moawia Ibrahim Hamedelnil &nbsp;|&nbsp; First Year — Semester 1</p>
-  <p style="margin-top:8px;color:var(--border);font-size:11px;">Dimensional Analysis · Vectors · Physics (1)</p>
+  <p>Physics 1 · University of Science and Technology · Faculty of Engineering · 2025</p>
+  <p>First Year — Semester 1 | Interactive 3D Study Guide</p>
 </footer>
 
 <script>
-// ── TAB NAVIGATION ──
-function showTab(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  event.target.classList.add('active');
-  window.scrollTo({top:0, behavior:'smooth'});
+// ─── GLOBALS ───
+const MCQ={D1:'b',D2:'c',D3:'a',D4:'c',C001:'c',M001:'c',W001:'c',Wv001:'b',H001:'c',V001:'b',V002:'c'};
+const renderers={}, scenes={}, cameras={}, animIds={};
+
+function mcq(el,ch,id){
+  const correct=MCQ[id];if(!correct)return;
+  const parent=el.parentElement;
+  if(parent.querySelector('.done'))return;
+  parent.querySelectorAll('.opt').forEach(o=>o.classList.add('done'));
+  const letters=['a','b','c','d'];
+  if(ch===correct)el.classList.add('ok2');
+  else{el.classList.add('no');parent.querySelectorAll('.opt').forEach((o,i)=>{if(letters[i]===correct)o.classList.add('ok2');});}
 }
 
-// ── MCQ LOGIC ──
-const answers = {
-  Q1:'b', Q2:'c', Q3:'a', Q4:'b', Q5:'b', Q6:'c',
-  Q7:'c', Q11:'b',
-  V1:'c', V2:'b', V3:'b', V4:'a', V5:'c', V6:'b', V12:'c'
-};
+function tog(id){
+  const b=document.getElementById(id);
+  b.classList.toggle('vis');
+  const btn=b.previousElementSibling;
+  btn.textContent=b.classList.contains('vis')?'🔼 إخفاء الحل':'💡 الحل';
+}
 
-function mcq(el, chosen, qid) {
-  const correct = answers[qid];
-  const parent = el.parentElement;
-  if(parent.querySelector('.revealed')) return;
-  parent.querySelectorAll('.opt').forEach(o => o.classList.add('revealed'));
-  if(chosen === correct) {
-    el.classList.add('correct');
-  } else {
-    el.classList.add('wrong');
-    parent.querySelectorAll('.opt').forEach((o,i) => {
-      const letters = ['a','b','c','d'];
-      if(letters[i] === correct) o.classList.add('correct');
+function pg(id,btn){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(()=>{ initScene(id); },100);
+}
+
+// ─── THREE.JS HELPER ───
+function mkRenderer(cvId){
+  const cv=document.getElementById(cvId);
+  if(!cv)return null;
+  const w=cv.parentElement.clientWidth||600;
+  const h=parseInt(cv.getAttribute('height'))||300;
+  cv.width=w; cv.height=h;
+  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  r.setSize(w,h);
+  r.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  r.setClearColor(0x080b14,1);
+  return r;
+}
+
+function mkCamera(w,h){
+  const c=new THREE.PerspectiveCamera(50,w/h,0.1,100);
+  c.position.set(5,4,7);
+  c.lookAt(0,0,0);
+  return c;
+}
+
+function mkLight(scene){
+  scene.add(new THREE.AmbientLight(0x334466,1));
+  const d=new THREE.DirectionalLight(0x7ab4ff,1.5);
+  d.position.set(5,8,5);
+  scene.add(d);
+  const p=new THREE.PointLight(0x00d4ff,0.8,20);
+  p.position.set(-3,3,3);
+  scene.add(p);
+}
+
+function grid(scene){
+  const g=new THREE.GridHelper(10,10,0x1a2540,0x1a2540);
+  scene.add(g);
+}
+
+function arrow3(scene,from,to,col){
+  const dir=new THREE.Vector3().subVectors(to,from).normalize();
+  const len=from.distanceTo(to);
+  const arr=new THREE.ArrowHelper(dir,from,len,col,len*0.15,len*0.08);
+  scene.add(arr);return arr;
+}
+
+function stopScene(id){
+  if(animIds[id]){cancelAnimationFrame(animIds[id]);delete animIds[id];}
+}
+
+// ─── SCENE: DIMENSIONS ───
+let dimObj={};
+function initDimScene(){
+  if(renderers.dim)return;
+  const r=mkRenderer('cvDim');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvDim');
+  const cam=mkCamera(cv.width,cv.height);
+  mkLight(s);grid(s);
+  renderers.dim=r;scenes.dim=s;cameras.dim=cam;
+  // axes labels via colored arrows
+  arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(3,0,0),0xef4444);
+  arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(0,3,0),0x22c55e);
+  arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,3),0x3b82f6);
+  // wireframe cube
+  const geo=new THREE.BoxGeometry(2,2,2);
+  const edges=new THREE.EdgesGeometry(geo);
+  const cube=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:0x4f8ef7,opacity:0.5,transparent:true}));
+  s.add(cube);dimObj.cube=cube;
+  // sphere at origin
+  const sp=new THREE.Mesh(new THREE.SphereGeometry(.15,16,16),new THREE.MeshPhongMaterial({color:0xf59e0b,emissive:0x7c4a00}));
+  s.add(sp);
+  function loop(){
+    animIds.dim=requestAnimationFrame(loop);
+    cube.rotation.y+=0.008;cube.rotation.x+=0.003;
+    r.render(s,cam);
+  }loop();
+}
+
+function dimScene(mode){
+  document.querySelectorAll('#p-dim .sc-btn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  if(mode==='spin'&&dimObj.cube){dimObj.cube.rotation.set(0,0,0);}
+}
+
+// ─── SCENE: VECTORS ───
+let vecObjs={};
+function initVecScene(){
+  if(renderers.vec)return;
+  const r=mkRenderer('cvVec');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvVec');
+  const cam=mkCamera(cv.width,cv.height);
+  mkLight(s);grid(s);
+  renderers.vec=r;scenes.vec=s;cameras.vec=cam;
+  // Vector A
+  const aArr=arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(2,2,0),0x4f8ef7);
+  // Vector B
+  const bArr=arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(1,-1,2),0xf59e0b);
+  // Resultant
+  const rArr=arrow3(s,new THREE.Vector3(0,0,0),new THREE.Vector3(3,1,2),0x10b981);
+  vecObjs={aArr,bArr,rArr};
+  let t=0;
+  function loop(){
+    animIds.vec=requestAnimationFrame(loop);
+    t+=0.01;
+    cam.position.x=7*Math.sin(t*0.2);
+    cam.position.z=7*Math.cos(t*0.2);
+    cam.lookAt(0,0,0);
+    r.render(s,cam);
+  }loop();
+}
+
+function vecMode(mode){
+  document.querySelectorAll('#p-vec .sc-btn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+}
+
+// ─── SCENE: CIRCULAR MOTION ───
+let circState={speed:0.03,vertical:false,ball:null,t:0};
+function initCircScene(){
+  if(renderers.circ)return;
+  const r=mkRenderer('cvCirc');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvCirc');
+  const cam=mkCamera(cv.width,cv.height);
+  mkLight(s);grid(s);
+  renderers.circ=r;scenes.circ=s;cameras.circ=cam;
+  // Circle path
+  const pts=[];
+  for(let i=0;i<=64;i++){const a=i/64*Math.PI*2;pts.push(new THREE.Vector3(2.5*Math.cos(a),0,2.5*Math.sin(a)));}
+  const path=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x1a2540}));
+  s.add(path);
+  // Ball
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(.25,16,16),new THREE.MeshPhongMaterial({color:0x4f8ef7,emissive:0x1a3366}));
+  s.add(ball);circState.ball=ball;
+  // Center post
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,3,8),new THREE.MeshPhongMaterial({color:0x334466}));
+  s.add(post);
+  // String
+  const strPts=[new THREE.Vector3(0,0,0),new THREE.Vector3(2.5,0,0)];
+  const str=new THREE.Line(new THREE.BufferGeometry().setFromPoints(strPts),new THREE.LineBasicMaterial({color:0xfbbf24}));
+  s.add(str);circState.str=str;
+  function loop(){
+    animIds.circ=requestAnimationFrame(loop);
+    circState.t+=circState.speed;
+    const x=2.5*Math.cos(circState.t);
+    const z=circState.vertical?0:2.5*Math.sin(circState.t);
+    const y=circState.vertical?2.5*Math.sin(circState.t):0;
+    ball.position.set(x,y,z);
+    const pos=circState.str.geometry.attributes.position;
+    pos.setXYZ(1,x,y,z);pos.needsUpdate=true;
+    r.render(s,cam);
+  }loop();
+}
+
+function circMode(mode){
+  document.querySelectorAll('#p-circ .sc-btn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  if(mode==='slow')circState.speed=0.015;
+  else if(mode==='fast')circState.speed=0.06;
+  else if(mode==='vert'){circState.vertical=!circState.vertical;}
+}
+
+// ─── SCENE: MOMENTUM (particles) ───
+let momParticles=[];
+function initMomScene(){
+  if(renderers.mom)return;
+  const r=mkRenderer('cvMom');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvMom');
+  const cam=new THREE.PerspectiveCamera(50,cv.width/cv.height,.1,100);
+  cam.position.set(0,3,10);cam.lookAt(0,0,0);
+  mkLight(s);grid(s);
+  renderers.mom=r;scenes.mom=s;cameras.mom=cam;
+  // Two balls
+  const b1=new THREE.Mesh(new THREE.SphereGeometry(.4,16,16),new THREE.MeshPhongMaterial({color:0x4f8ef7,emissive:0x1a3366}));
+  b1.position.set(-4,0.4,0);s.add(b1);
+  const b2=new THREE.Mesh(new THREE.SphereGeometry(.6,16,16),new THREE.MeshPhongMaterial({color:0xf59e0b,emissive:0x7c4a00}));
+  b2.position.set(3,0.4,0);s.add(b2);
+  momParticles=[{mesh:b1,vx:.06},{mesh:b2,vx:-.02}];
+  function loop(){
+    animIds.mom=requestAnimationFrame(loop);
+    momParticles.forEach(p=>{
+      p.mesh.position.x+=p.vx;
+      if(Math.abs(p.mesh.position.x)>5)p.vx*=-1;
     });
+    // elastic collision check
+    const d=momParticles[0].mesh.position.distanceTo(momParticles[1].mesh.position);
+    if(d<1.1){const tmp=momParticles[0].vx;momParticles[0].vx=momParticles[1].vx;momParticles[1].vx=tmp;}
+    r.render(s,cam);
+  }loop();
+}
+function momMode(m){document.querySelectorAll('#p-mom .sc-btn').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');}
+
+// ─── SCENE: WORK/ENERGY (pendulum) ───
+let workState={t:0,mode:'pendulum'};
+function initWorkScene(){
+  if(renderers.work)return;
+  const r=mkRenderer('cvWork');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvWork');
+  const cam=new THREE.PerspectiveCamera(50,cv.width/cv.height,.1,100);
+  cam.position.set(0,3,8);cam.lookAt(0,0,0);
+  mkLight(s);grid(s);
+  renderers.work=r;scenes.work=s;cameras.work=cam;
+  // Pendulum
+  const pivot=new THREE.Mesh(new THREE.SphereGeometry(.1,8,8),new THREE.MeshPhongMaterial({color:0x4a5568}));
+  pivot.position.set(0,3,0);s.add(pivot);
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(.3,16,16),new THREE.MeshPhongMaterial({color:0xef4444,emissive:0x7c0000}));
+  s.add(ball);
+  const strPts=[pivot.position.clone(),new THREE.Vector3(0,0,0)];
+  const str=new THREE.Line(new THREE.BufferGeometry().setFromPoints(strPts),new THREE.LineBasicMaterial({color:0xfbbf24}));
+  s.add(str);
+  workState.ball=ball;workState.str=str;workState.pivot=pivot;
+  function loop(){
+    animIds.work=requestAnimationFrame(loop);
+    workState.t+=0.025;
+    const a=Math.sin(workState.t)*0.8;
+    const L=3;
+    const bx=pivot.position.x+L*Math.sin(a);
+    const by=pivot.position.y-L*Math.cos(a);
+    ball.position.set(bx,by,0);
+    const p=str.geometry.attributes.position;
+    p.setXYZ(1,bx,by,0);p.needsUpdate=true;
+    // color by height (energy)
+    const h=(by-pivot.position.y+L)/L;
+    ball.material.color.setHSL(0+h*0.3,1,.4);
+    r.render(s,cam);
+  }loop();
+}
+function workMode(m){document.querySelectorAll('#p-work .sc-btn').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');}
+
+// ─── SCENE: WAVES ───
+let waveState={t:0,mode:'trans'};
+function initWaveScene(){
+  if(renderers.wave)return;
+  const r=mkRenderer('cvWave');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvWave');
+  const cam=new THREE.PerspectiveCamera(50,cv.width/cv.height,.1,100);
+  cam.position.set(0,5,10);cam.lookAt(0,0,0);
+  mkLight(s);grid(s);
+  renderers.wave=r;scenes.wave=s;cameras.wave=cam;
+  const N=80;const pts=[];
+  for(let i=0;i<N;i++)pts.push(new THREE.Vector3(i/N*10-5,0,0));
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  const waveLine=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x4f8ef7,linewidth:2}));
+  s.add(waveLine);waveState.geo=geo;waveState.N=N;
+  // particles along wave
+  const balls=[];
+  for(let i=0;i<N;i+=5){
+    const b=new THREE.Mesh(new THREE.SphereGeometry(.1,8,8),new THREE.MeshPhongMaterial({color:0x00d4ff}));
+    s.add(b);balls.push({mesh:b,idx:i});
   }
+  waveState.balls=balls;
+  function loop(){
+    animIds.wave=requestAnimationFrame(loop);
+    waveState.t+=0.05;
+    const pos=waveState.geo.attributes.position;
+    for(let i=0;i<N;i++){
+      const x=i/N*10-5;
+      const y=Math.sin(i/N*Math.PI*4-waveState.t)*1.2;
+      pos.setY(i,y);
+    }
+    pos.needsUpdate=true;
+    waveState.balls.forEach(b=>{
+      const y=Math.sin(b.idx/N*Math.PI*4-waveState.t)*1.2;
+      const x=b.idx/N*10-5;
+      b.mesh.position.set(x,y,0);
+    });
+    r.render(s,cam);
+  }loop();
 }
+function waveMode(m){document.querySelectorAll('#p-wave .sc-btn').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');}
 
-// ── SHOW ANSWER ──
-function toggleAns(id) {
-  const box = document.getElementById(id);
-  box.classList.toggle('visible');
-  const btn = box.previousElementSibling;
-  btn.textContent = box.classList.contains('visible') ? '🔼 إخفاء الحل' : '💡 اظهر الحل';
-}
-
-// ── VECTOR CALCULATOR ──
-function calcVectors() {
-  const ax = parseFloat(document.getElementById('ax').value)||0;
-  const ay = parseFloat(document.getElementById('ay').value)||0;
-  const bx = parseFloat(document.getElementById('bx').value)||0;
-  const by = parseFloat(document.getElementById('by').value)||0;
-
-  const magA = Math.sqrt(ax*ax + ay*ay);
-  const magB = Math.sqrt(bx*bx + by*by);
-  const dot = ax*bx + ay*by;
-  const cross = ax*by - ay*bx;
-  const sumX = ax+bx, sumY = ay+by;
-  const difX = ax-bx, difY = ay-by;
-  const magSum = Math.sqrt(sumX*sumX + sumY*sumY);
-  const magDif = Math.sqrt(difX*difX + difY*difY);
-  const cosA = (magA*magB) > 0 ? dot/(magA*magB) : 0;
-  const angle = Math.acos(Math.max(-1,Math.min(1,cosA))) * 180 / Math.PI;
-
-  const r = document.getElementById('vec-result');
-  r.style.display = 'block';
-  r.innerHTML = `
-  <span style="color:var(--accent2)">A⃗</span> = ${ax}î + ${ay}ĵ &nbsp;&nbsp; |A| = ${magA.toFixed(3)}<br>
-  <span style="color:var(--accent3)">B⃗</span> = ${bx}î + ${by}ĵ &nbsp;&nbsp; |B| = ${magB.toFixed(3)}<br>
-  ─────────────────────────<br>
-  <span style="color:var(--green)">A⃗ + B⃗</span> = ${sumX}î + ${sumY}ĵ &nbsp;&nbsp; |A+B| = ${magSum.toFixed(3)}<br>
-  <span style="color:var(--red)">A⃗ − B⃗</span> = ${difX}î + ${difY}ĵ &nbsp;&nbsp; |A−B| = ${magDif.toFixed(3)}<br>
-  A⃗ · B⃗ = <span style="color:var(--accent)">${dot.toFixed(3)}</span><br>
-  |A⃗ × B⃗| = <span style="color:var(--accent)">${Math.abs(cross).toFixed(3)}</span> (2D cross product magnitude)<br>
-  Angle θ = <span style="color:var(--accent3)">${angle.toFixed(2)}°</span>
-  `;
-  drawVectors(ax, ay, bx, by, sumX, sumY);
-}
-
-// ── CANVAS VECTOR DIAGRAM ──
-function drawVectors(ax, ay, bx, by, rx, ry) {
-  const canvas = document.getElementById('vecCanvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  const cx = W/2, cy = H/2;
-  const scale = 30;
-
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = '#0d1117';
-  ctx.fillRect(0,0,W,H);
-
-  // Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
-  for(let x = cx % scale; x < W; x += scale) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for(let y = cy % scale; y < H; y += scale) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-  // Axes
-  ctx.strokeStyle = 'rgba(100,116,139,0.6)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
-  ctx.fillStyle = '#64748b'; ctx.font = '12px JetBrains Mono';
-  ctx.fillText('x', W-14, cy-6); ctx.fillText('y', cx+6, 12);
-
-  function arrow(x1,y1,x2,y2,col) {
-    const dx = x2-x1, dy = y2-y1;
-    const len = Math.sqrt(dx*dx+dy*dy);
-    if(len < 1) return;
-    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    // arrowhead
-    const angle = Math.atan2(dy,dx);
-    ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - 10*Math.cos(angle-0.4), y2 - 10*Math.sin(angle-0.4));
-    ctx.lineTo(x2 - 10*Math.cos(angle+0.4), y2 - 10*Math.sin(angle+0.4));
-    ctx.closePath(); ctx.fill();
+// ─── SCENE: HEAT (particles) ───
+let heatParticles=[];
+function initHeatScene(){
+  if(renderers.heat)return;
+  const r=mkRenderer('cvHeat');if(!r)return;
+  const s=new THREE.Scene();
+  const cv=document.getElementById('cvHeat');
+  const cam=new THREE.PerspectiveCamera(50,cv.width/cv.height,.1,100);
+  cam.position.set(0,6,10);cam.lookAt(0,0,0);
+  mkLight(s);
+  renderers.heat=r;scenes.heat=s;cameras.heat=cam;
+  // Particles at different temperatures
+  for(let i=0;i<40;i++){
+    const hot=i<20;
+    const mat=new THREE.MeshPhongMaterial({color:hot?0xef4444:0x3b82f6,emissive:hot?0x7c0000:0x1a3366});
+    const b=new THREE.Mesh(new THREE.SphereGeometry(.15,8,8),mat);
+    b.position.set(hot?-3+Math.random()*2.5:0.5+Math.random()*2.5,(Math.random()-.5)*3,(Math.random()-.5)*3);
+    s.add(b);
+    heatParticles.push({mesh:b,vx:(Math.random()-.5)*(hot?.1:.03),vy:(Math.random()-.5)*.05,vz:(Math.random()-.5)*.05});
   }
-
-  const toC = (x,y) => [cx + x*scale, cy - y*scale];
-  const [x1,y1] = toC(0,0);
-  const [x2,y2] = toC(ax,ay);
-  const [x3,y3] = toC(bx,by);
-  const [x4,y4] = toC(rx,ry);
-
-  // A (blue)
-  arrow(x1,y1,x2,y2,'#3b82f6');
-  ctx.fillStyle='#3b82f6'; ctx.font='bold 14px Cairo';
-  ctx.fillText('A⃗', x2+6, y2-6);
-
-  // B (amber)
-  arrow(x1,y1,x3,y3,'#f59e0b');
-  ctx.fillStyle='#f59e0b';
-  ctx.fillText('B⃗', x3+6, y3-6);
-
-  // R = A+B (green dashed)
-  ctx.setLineDash([6,4]);
-  arrow(x1,y1,x4,y4,'#10b981');
-  ctx.setLineDash([]);
-  ctx.fillStyle='#10b981';
-  ctx.fillText('R⃗', x4+6, y4-6);
-
-  // Origin dot
-  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
+  function loop(){
+    animIds.heat=requestAnimationFrame(loop);
+    heatParticles.forEach(p=>{
+      p.mesh.position.x+=p.vx;
+      p.mesh.position.y+=p.vy;
+      p.mesh.position.z+=p.vz;
+      if(Math.abs(p.mesh.position.x)>4)p.vx*=-1;
+      if(Math.abs(p.mesh.position.y)>2)p.vy*=-1;
+      if(Math.abs(p.mesh.position.z)>2)p.vz*=-1;
+    });
+    r.render(s,cam);
+  }loop();
 }
+function heatMode(m){document.querySelectorAll('#p-heat .sc-btn').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');}
 
-// Init calculator on load
-window.addEventListener('load', () => { calcVectors(); });
+// ─── SCENE INIT MAP ───
+const sceneInits={'dim':initDimScene,'vec':initVecScene,'circ':initCircScene,'mom':initMomScene,'work':initWorkScene,'wave':initWaveScene,'heat':initHeatScene};
+function initScene(id){if(sceneInits[id])sceneInits[id]();}
 
-// ── SMOOTH SCROLL TABS ──
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
+// ─── RESIZE ───
+window.addEventListener('resize',()=>{
+  Object.keys(renderers).forEach(id=>{
+    const r=renderers[id];
+    const cv=r.domElement;
+    const w=cv.parentElement.clientWidth||600;
+    const h=parseInt(cv.getAttribute('height'))||300;
+    r.setSize(w,h);
+    if(cameras[id])cameras[id].aspect=w/h,cameras[id].updateProjectionMatrix();
   });
 });
+
+// ─── INIT FIRST SCENE ───
+window.addEventListener('load',()=>{ setTimeout(initDimScene,200); });
 </script>
 </body>
 </html>
